@@ -18,6 +18,7 @@
 - AI（選用）：`callLLM` 沿用 fridge-recipe-notes 格式，prompt 不送成員暱稱；回傳 JSON 陣列店家，標「AI 建議・請查證」。
 - 標準配備：跑馬燈（工作區公告 GAS、滑鼠移入暫停）、⚙ 常用設定（含「關於本工具」）、警語彈窗（首訪自動）、manual.html#creator 完整版、PWA、visitor-badge。
 - **RWD**（2026-10-31 使用者要求）：≤640px 成員卡預設收合成一行摘要（`.msum`：站・交通・預算・🚫限制・想吃），點 ✎ 或摘要展開（`openCards` 記住、新增的成員自動展開；跨 640 斷點 resize 會重繪）；底部固定 `#mobileGo`（＋成員／幫我們決定）；頁首三鈕同列。641–1000px 成員兩欄；≤900px 圓桌＋摘要並排。`.layout`／`.members` 欄寬要用 `minmax(0,1fr)` 並給 `.layout > div{min-width:0}`，否則 360px 會溢出 14px。
+- **複製成員**（2026-11-01 使用者要求）：卡片右上角 ⧉（`data-act="dup"`）在原卡後面插入複本；名單列「⧉ 複製上一位」（`#copyLast`，手機底部列 `#mCopy`）。複本的 diet／wants 陣列要 `.slice()`，不能跟原本共用；名字會用 `copyName` 加上不重複的編號（小魚→小魚 2→小魚 3）。新增與複製都走 `insertMember`（30 人上限、總人數自動跟著加、展開後選取名字）。
 - 測試掛鉤 `window._gdd`（state、decide、go、applyPreset、rankHubs、travelMin、shareUrl、openDecide…）。
 
 ## 驗證紀錄（2026-10-31，Python Playwright）

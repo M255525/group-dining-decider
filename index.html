@@ -212,6 +212,10 @@
   .empty{color:var(--dim);font-size:.92rem;padding:8px 0}
 
   .mhead{display:flex;gap:8px;align-items:center;padding-right:58px}
+  .mcard .dup{position:absolute;top:6px;right:34px;border:0;background:none;color:var(--dim);cursor:pointer;font-size:.95rem;padding:4px 6px;border-radius:6px}
+  .mcard .dup:hover,.mcard .tog:hover{background:var(--green-soft);color:var(--green)}
+  .mcard.flash{animation:mflash 1.2s ease-out}
+  @keyframes mflash{from{box-shadow:0 0 0 3px var(--green)}to{box-shadow:0 0 0 0 transparent}}
   .mhead input[type=text]{flex:1;min-width:0}
   .mcard .tog{position:absolute;top:6px;right:34px;border:0;background:none;color:var(--dim);cursor:pointer;font-size:.95rem;padding:4px 6px;border-radius:6px;display:none}
   .msum{display:none;font-size:.84rem;color:var(--dim);margin:4px 0 0 38px;line-height:1.5}
@@ -233,6 +237,8 @@
   }
   @media (max-width:640px){
     .mcard .tog{display:block}
+    .mcard .dup{right:62px}
+    .mhead{padding-right:86px}
     .mcard{padding:8px 10px}
     .mcard .row select{flex:1;min-width:0}
     .table-box{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;align-items:center;text-align:left}
@@ -244,7 +250,8 @@
     .hub table{font-size:.8rem}
     .tabs button{flex:1}
     #mobileGo{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:2000;padding:8px 16px calc(8px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.08);gap:8px}
-    #mobileGo .btn{flex:1}
+    #mobileGo .btn{flex:1;padding:8px 6px;font-size:.86rem}
+    #mobileGo #mGo{flex:1.4}
     body{padding-bottom:70px}
     #toast{bottom:84px}
     .brand .sub{font-size:.85rem}
@@ -302,6 +309,7 @@
         <div class="members" id="members"></div>
         <div class="mbar">
           <button class="btn" id="addMember" type="button">＋ 新增成員</button>
+          <button class="btn" id="copyLast" type="button" title="複製最後一位成員的出發站、交通、預算與飲食限制">⧉ 複製上一位</button>
           <button class="btn ghost" id="clearMembers" type="button">清空</button>
           <span class="count">總人數 <input type="number" id="headcount" min="1" max="200" aria-label="總人數"> 人 <span id="headHint"></span></span>
         </div>
@@ -491,7 +499,7 @@
   </div>
 </div>
 
-<div id="mobileGo"><button class="btn" type="button" id="mAdd">＋ 成員</button><button class="btn primary" type="button" id="mGo">🍽 幫我們決定！</button></div>
+<div id="mobileGo"><button class="btn" type="button" id="mAdd">＋ 成員</button><button class="btn" type="button" id="mCopy">⧉ 複製上一位</button><button class="btn primary" type="button" id="mGo">🍽 幫我們決定！</button></div>
 
 <div id="toast" role="status"></div>
 
@@ -768,6 +776,7 @@
     var line = m.line || lineOf(m.station);
     var collapsed = isMobile() && !openCards[m.id];
     return '<div class="mcard' + (collapsed ? " collapsed" : "") + '" data-id="' + m.id + '">' +
+      '<button class="dup" type="button" data-act="dup" aria-label="複製這位成員" title="複製這位成員（同出發站、交通、預算與飲食限制）">⧉</button>' +
       '<button class="tog" type="button" data-act="tog" aria-label="展開或收合">' + (collapsed ? "✎" : "▴") + '</button>' +
       '<button class="del" type="button" data-act="del" aria-label="移除">✕</button>' +
       '<div class="mhead"><span class="avatar" style="background:' + COLORS[i % COLORS.length] + '">' + esc((m.name || "?").slice(0, 1)) + '</span><input type="text" data-f="name" value="' + esc(m.name) + '" maxlength="12" placeholder="暱稱" aria-label="暱稱"></div>' +
@@ -839,6 +848,11 @@
       cd.querySelector(".tog").textContent = willOpen ? "▴" : "✎";
       return;
     }
+    if(e.target.closest('[data-act="dup"]')){
+      var src = findM(e.target.closest(".mcard").dataset.id);
+      if(src) dupMember(src);
+      return;
+    }
     if(e.target.closest('[data-act="del"]')){
       var card = e.target.closest(".mcard");
       state.members = state.members.filter(function(m){ return m.id !== card.dataset.id; });
@@ -851,13 +865,34 @@
     var first = !state.members.length && settings.name;
     return {id:uid(), name:first ? settings.name : "成員" + (state.members.length + 1), station:first ? settings.station : "", line:"", mode:"mrt", budget:0, diet:[], wants:[]};
   }
-  $("addMember").onclick = function(){
-    if(state.members.length >= 30){ toast("名單最多 30 人，其他人用總人數補上"); return; }
-    var nm = newMember(); openCards[nm.id] = true;
-    state.members.push(nm);
+  function copyName(name){
+    var base = String(name || "成員").replace(/\s*\d+$/, "") || "成員", n = 2, used = {};
+    state.members.forEach(function(m){ used[m.name] = 1; });
+    while(used[base + " " + n]) n++;
+    return (base + " " + n).slice(0, 12);
+  }
+  function insertMember(nm, idx){
+    if(state.members.length >= 30){ toast("名單最多 30 人，其他人用總人數補上"); return false; }
+    openCards[nm.id] = true;
+    state.members.splice(idx, 0, nm);
     if(state.head && state.head < state.members.length) state.head = state.members.length;
     persist(); renderMembers();
-    var inputs = $("members").querySelectorAll('input[data-f="name"]'); if(inputs.length){ inputs[inputs.length - 1].select(); }
+    var card = $("members").querySelector('.mcard[data-id="' + nm.id + '"]');
+    if(card){
+      card.classList.add("flash");
+      card.scrollIntoView({block:"nearest", behavior:settings.reduce ? "auto" : "smooth"});
+      var inp = card.querySelector('input[data-f="name"]'); if(inp){ inp.focus(); inp.select(); }
+    }
+    return true;
+  }
+  function dupMember(src){
+    var nm = {id:uid(), name:copyName(src.name), station:src.station, line:src.line || lineOf(src.station), mode:src.mode, budget:src.budget, diet:(src.diet || []).slice(), wants:(src.wants || []).slice()};
+    if(insertMember(nm, state.members.indexOf(src) + 1)) toast("已複製「" + (src.name || "成員") + "」，改個名字就好");
+  }
+  $("addMember").onclick = function(){ insertMember(newMember(), state.members.length); };
+  $("copyLast").onclick = function(){
+    if(!state.members.length){ toast("還沒有成員可以複製，先新增一位"); return; }
+    dupMember(state.members[state.members.length - 1]);
   };
   $("clearMembers").onclick = function(){ if(!state.members.length) return; state.members = []; state.head = 0; persist(); renderMembers(); toast("名單已清空"); };
   $("headcount").addEventListener("change", function(){
@@ -1110,7 +1145,8 @@
     } catch(e){ toast("分享連結格式不正確"); return false; }
   }
   $("mGo").onclick = function(){ $("btnGo").click(); };
-  $("mAdd").onclick = function(){ $("addMember").click(); var c = $("members").lastElementChild; if(c && c.scrollIntoView) c.scrollIntoView({block:"center"}); };
+  $("mAdd").onclick = function(){ $("addMember").click(); };
+  $("mCopy").onclick = function(){ $("copyLast").click(); };
   $("btnShare").onclick = function(){ copyText(shareUrl(), "分享連結已複製（含成員暱稱與飲食限制，請只傳給同行的人）"); };
 
   /* ================= 拍板與紀錄 ================= */
