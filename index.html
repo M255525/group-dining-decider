@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>聚餐決定器</title>
+<meta name="description" content="聚餐選擇困難症助手：整合人數、預算、飲食限制與交通，算出對大家都公平的集合點，推薦適合的聚餐類型，再用轉盤或投票幫你拍板。">
+<meta name="theme-color" content="#c8553d">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f7efe3; --cloth:rgba(200,85,61,.075); --panel:#fffdf8; --panel2:#fbf5ec;
+    --ink:#3b2a20; --dim:#7a6656; --line:#e6d6c2; --line-soft:#efe4d6;
+    --accent:#c8553d; --accent-ink:#fff; --accent-soft:#f6dcd3;
+    --mustard:#d99a2b; --mustard-soft:#f8e8c6; --green:#4f8a4a; --green-soft:#dcebd5;
+    --warn:#b5462e; --shadow:0 2px 0 rgba(90,60,30,.06), 0 6px 18px rgba(90,60,30,.08);
+    --radius:14px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1f1814; --cloth:rgba(232,140,110,.05); --panel:#2a211b; --panel2:#251d18;
+      --ink:#f2e6d8; --dim:#bba894; --line:#47392e; --line-soft:#3a2f27;
+      --accent:#e2775c; --accent-ink:#1f1814; --accent-soft:#4a2b22;
+      --mustard:#e6b14f; --mustard-soft:#4a3a1d; --green:#86bb7c; --green-soft:#24361f;
+      --warn:#f08a70; --shadow:0 2px 10px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1f1814; --cloth:rgba(232,140,110,.05); --panel:#2a211b; --panel2:#251d18;
+    --ink:#f2e6d8; --dim:#bba894; --line:#47392e; --line-soft:#3a2f27;
+    --accent:#e2775c; --accent-ink:#1f1814; --accent-soft:#4a2b22;
+    --mustard:#e6b14f; --mustard-soft:#4a3a1d; --green:#86bb7c; --green-soft:#24361f;
+    --warn:#f08a70; --shadow:0 2px 10px rgba(0,0,0,.35);
+  }
+  html{font-size:16px;scroll-padding-top:44px}
+  html[data-font="s"]{font-size:15px} html[data-font="l"]{font-size:18px}
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--ink);font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;line-height:1.6;
+    background-color:var(--bg);
+    background-image:linear-gradient(90deg,var(--cloth) 50%,transparent 50%),linear-gradient(var(--cloth) 50%,transparent 50%);
+    background-size:34px 34px;}
+  a{color:var(--accent)}
+  button,input,select,textarea{font:inherit;color:inherit}
+  input,select,textarea{font-size:16px}
+  #marqueeBar{position:fixed;top:0;left:0;right:0;height:30px;background:var(--panel);border-bottom:1px solid var(--line-soft);z-index:2100;overflow:hidden;display:none;align-items:center;}
+  #marqueeBar.show{display:flex;}
+  #marqueeTrack{white-space:nowrap;display:inline-block;padding-left:100%;animation:marquee-scroll linear infinite;font-size:13px;color:var(--dim);}
+  #marqueeBar:hover #marqueeTrack{animation-play-state:paused}
+  @keyframes marquee-scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+  body.has-marquee{padding-top:30px;}
+
+  .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+  header.top{padding:18px 0 6px}
+  .brand{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{width:52px;height:52px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font-size:28px;box-shadow:var(--shadow);flex:none}
+  .brand h1{font-family:"Noto Serif TC",serif;font-weight:900;font-size:1.75rem;margin:0;letter-spacing:.02em}
+  .brand .sub{margin:2px 0 0;color:var(--dim);font-size:.92rem}
+  .brand .tools{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+  .area-tag{display:inline-block;background:var(--mustard-soft);color:var(--ink);border-radius:999px;padding:0 10px;font-size:.8rem;margin-left:6px;vertical-align:middle}
+  .notice{margin:10px 0 0;padding:8px 12px;border-left:4px solid var(--mustard);background:var(--panel);border-radius:8px;font-size:.88rem;color:var(--dim)}
+  .notice button{padding:0;border:0;background:none;color:var(--accent);text-decoration:underline;cursor:pointer;font-size:inherit}
+
+  .btn{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 14px;cursor:pointer;font-size:.92rem;line-height:1.3;white-space:nowrap;transition:transform .08s, background .15s}
+  .btn:hover{background:var(--panel2)}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+  .btn.primary:hover{filter:brightness(1.05)}
+  .btn.big{font-size:1.1rem;padding:12px 26px}
+  .btn.ghost{background:transparent}
+  .btn.sm{padding:4px 10px;font-size:.84rem}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;margin:16px 0}
+  .card h2{font-family:"Noto Serif TC",serif;font-size:1.2rem;margin:0 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .step{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:.95rem;font-family:inherit}
+  .card .hint{color:var(--dim);font-size:.88rem;margin:0 0 10px}
+
+  .presets{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 12px}
+  .presets .btn{background:var(--mustard-soft);border-color:transparent}
+
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+  .members{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+  .mcard{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel2);position:relative}
+  .mcard .row{display:flex;gap:8px;align-items:center;margin:6px 0;flex-wrap:wrap}
+  .mcard .row > label{font-size:.82rem;color:var(--dim);min-width:3.6em}
+  .mcard input[type=text]{flex:1;min-width:0}
+  .mcard input,.mcard select,.field input,.field select,.field textarea{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:5px 8px}
+  .mcard select{max-width:100%}
+  .mcard .del{position:absolute;top:6px;right:6px;border:0;background:none;color:var(--dim);cursor:pointer;font-size:1rem;padding:4px 6px;border-radius:6px}
+  .mcard .del:hover{background:var(--accent-soft);color:var(--warn)}
+  .mcard .avatar{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;flex:none;font-size:.9rem}
+  .chips{display:flex;gap:5px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:2px 9px;font-size:.8rem;cursor:pointer;user-select:none}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .chip.want.on{background:var(--green);border-color:var(--green);color:#fff}
+  .mbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+  .mbar .count{margin-left:auto;color:var(--dim);font-size:.9rem}
+  .mbar input{width:5em;border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:var(--panel)}
+
+  .table-box{position:sticky;top:44px;text-align:center}
+  .table-box svg{width:100%;max-width:280px;height:auto}
+  .table-box .legend{font-size:.8rem;color:var(--dim);display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-right:3px}
+  .summary{font-size:.88rem;text-align:left;background:var(--panel2);border-radius:10px;padding:8px 10px;margin-top:8px}
+  .summary b{color:var(--accent)}
+
+  .conds{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px 16px}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field > span{font-size:.85rem;color:var(--dim)}
+  .seg{display:flex;flex-wrap:wrap;gap:4px}
+  .seg button{border:1px solid var(--line);background:var(--panel);padding:5px 11px;border-radius:999px;cursor:pointer;font-size:.88rem}
+  .seg button.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+  .checks{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.92rem}
+  .checks label{display:flex;align-items:center;gap:5px;cursor:pointer}
+
+  .go{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin:20px 0 6px}
+
+  #results{display:none}
+  #results.show{display:block}
+  .hubs{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+  .hub{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel2)}
+  .hub.best{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+  .hub h3{margin:0 0 4px;font-size:1.05rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .hub .tags span{display:inline-block;font-size:.72rem;background:var(--mustard-soft);border-radius:999px;padding:0 7px;margin:0 3px 3px 0}
+  .hub table{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:4px}
+  .hub td{padding:2px 4px;border-bottom:1px dashed var(--line-soft)}
+  .hub td:last-child{text-align:right;white-space:nowrap}
+  .hub .stat{font-size:.85rem;color:var(--dim)}
+  .far{color:var(--warn);font-weight:700}
+
+  .picks{display:grid;gap:12px}
+  .pick{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--panel);display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:start}
+  .pick .rank{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-size:24px;background:var(--panel2);border:1px solid var(--line)}
+  .pick h3{margin:0;font-size:1.12rem}
+  .pick h3 small{font-weight:400;color:var(--dim);font-size:.82rem;margin-left:6px}
+  .pick .meta{font-size:.88rem;color:var(--dim);margin:2px 0 6px}
+  .pick .meta b{color:var(--ink)}
+  .score{text-align:center;min-width:64px}
+  .score .num{font-family:"Noto Serif TC",serif;font-size:1.7rem;font-weight:900;color:var(--accent);line-height:1}
+  .score .lbl{font-size:.72rem;color:var(--dim)}
+  .bars{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:.76rem;color:var(--dim)}
+  .bars span i{display:inline-block;height:6px;border-radius:3px;background:var(--green);vertical-align:middle;margin-left:3px}
+  .bars span i.bg{background:var(--line);margin-left:0}
+  .badges{display:flex;flex-wrap:wrap;gap:5px;margin:6px 0 2px}
+  .badge{font-size:.78rem;border-radius:8px;padding:1px 8px;background:var(--mustard-soft)}
+  .badge.warn{background:var(--accent-soft);color:var(--warn)}
+  .badge.ok{background:var(--green-soft);color:var(--green)}
+  .pick .acts{grid-column:2 / 4;display:flex;gap:6px;flex-wrap:wrap}
+  .why-not{margin-top:12px;font-size:.88rem}
+  .why-not summary{cursor:pointer;color:var(--dim)}
+  .why-not ul{margin:6px 0;padding-left:1.3em}
+  .why-not li{margin:2px 0}
+
+  .decide{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px;align-items:start}
+  .wheel-box{text-align:center;position:relative}
+  .wheel-wrap{position:relative;width:290px;height:290px;margin:0 auto}
+  .wheel-wrap canvas{width:290px;height:290px;border-radius:50%;box-shadow:var(--shadow)}
+  .pointer{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:26px solid var(--ink);z-index:2;filter:drop-shadow(0 2px 2px rgba(0,0,0,.25))}
+  .wheel-result{min-height:2.2em;margin:8px 0;font-weight:700;font-size:1.05rem}
+  .votes{display:grid;gap:8px}
+  .vote{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--panel2)}
+  .vote .vbar{height:8px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:4px}
+  .vote .vbar i{display:block;height:100%;background:var(--accent);transition:width .25s}
+  .vote .vname{font-size:.92rem}
+  .vote .vname b{margin-left:6px;color:var(--accent)}
+  .tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+  .tabs button{border:1px solid var(--line);background:var(--panel2);border-radius:999px;padding:5px 14px;cursor:pointer}
+  .tabs button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+
+  .ai-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:10px}
+  .ai-item{border:1px dashed var(--mustard);border-radius:12px;padding:10px 12px;background:var(--panel2);font-size:.9rem}
+  .ai-item h4{margin:0 0 3px;font-size:1rem}
+  .ai-item .tagai{font-size:.7rem;background:var(--mustard);color:#fff;border-radius:6px;padding:0 6px;margin-left:4px;vertical-align:middle}
+  #aiLoading{display:none;margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);font-size:.9rem}
+  #aiLoading.show{display:block}
+  .prog{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:6px 0}
+  .prog i{display:block;height:100%;width:0;background:var(--mustard);transition:width .4s}
+
+  .history{display:grid;gap:6px;font-size:.9rem}
+  .hrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px dashed var(--line);padding:5px 0}
+  .hrow .when{color:var(--dim);font-size:.82rem;min-width:7em}
+  .hrow .acts{margin-left:auto;display:flex;gap:4px}
+
+  .modal-bg{position:fixed;inset:0;background:rgba(30,20,12,.5);display:none;align-items:flex-start;justify-content:center;z-index:3000;padding:40px 16px;overflow:auto}
+  .modal-bg.show{display:flex}
+  .modal{background:var(--panel);color:var(--ink);border-radius:16px;max-width:620px;width:100%;padding:18px 20px;box-shadow:0 20px 60px rgba(0,0,0,.3);position:relative}
+  .modal h2{font-family:"Noto Serif TC",serif;margin:0 0 8px;font-size:1.25rem;padding-right:30px}
+  .modal .x{position:absolute;top:10px;right:10px;border:0;background:none;font-size:1.2rem;cursor:pointer;color:var(--dim);padding:4px 8px;border-radius:8px}
+  .modal .x:hover{background:var(--panel2)}
+  .modal .sect{font-weight:700;margin:14px 0 6px;color:var(--accent)}
+  .modal .srow{display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:8px;align-items:center;margin:7px 0}
+  .modal .srow > span{font-size:.88rem;color:var(--dim)}
+  .modal .srow input,.modal .srow select,.modal textarea{border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:6px 8px;width:100%}
+  .modal .foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px;align-items:center}
+  .modal ul.warn{padding-left:1.2em;margin:6px 0;font-size:.92rem}
+  .modal ul.warn li{margin:4px 0}
+  .creator-box{background:var(--panel2);border-radius:10px;padding:10px 12px;font-size:.9rem;margin-top:10px}
+  .modal textarea{min-height:190px;font-size:.92rem;line-height:1.6}
+  .note-s{font-size:.82rem;color:var(--dim)}
+
+  footer.site{margin:30px 0 0;padding:18px 0 30px;border-top:1px solid var(--line);font-size:.86rem;color:var(--dim);background:var(--panel)}
+  footer.site .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between;margin-top:8px}
+  footer.site details summary{cursor:pointer}
+
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--panel);padding:9px 16px;border-radius:999px;font-size:.92rem;opacity:0;pointer-events:none;transition:all .25s;z-index:4000;max-width:calc(100vw - 32px);text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .empty{color:var(--dim);font-size:.92rem;padding:8px 0}
+
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr}
+    .table-box{position:static;order:-1}
+    .decide{grid-template-columns:1fr}
+  }
+  @media (max-width:640px){
+    .brand h1{font-size:1.4rem}
+    .brand .tools{margin-left:0;width:100%}
+    .members{grid-template-columns:1fr}
+    .card{padding:14px 12px}
+    .pick{grid-template-columns:auto minmax(0,1fr)}
+    .pick .score{grid-column:1;grid-row:2}
+    .pick .acts{grid-column:1 / 3}
+    .modal .srow{grid-template-columns:1fr}
+    .wheel-wrap,.wheel-wrap canvas{width:250px;height:250px}
+  }
+  @media (max-width:360px){
+    .btn.big{width:100%}
+    .wrap{padding:0 10px}
+  }
+  @media (prefers-reduced-motion: reduce){ #marqueeTrack{animation-duration:0s !important} }
+  @media print{ #marqueeBar,header .tools,.go,footer.site,.decide,.acts{display:none !important} body{background:#fff} }
+</style>
+</head>
+<body>
+<div id="marqueeBar"><div id="marqueeTrack"></div></div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">🍽</div>
+      <div>
+        <h1>聚餐決定器 <span class="area-tag">台北・新北</span></h1>
+        <p class="sub">聚餐選擇困難症助手：人數、預算、飲食限制、交通一次整合，幫大家找到公平的集合點和吃什麼。</p>
+      </div>
+      <div class="tools">
+        <button class="btn" id="btnSettings" type="button">⚙ 常用設定</button>
+        <a class="btn" href="manual.html" target="_blank" rel="noopener" style="text-decoration:none">📖 操作手冊</a>
+        <button class="btn" type="button" data-install>📲 加入主畫面</button>
+      </div>
+    </div>
+    <p class="notice">⚠ 交通時間、人均價位都是<b>估算值</b>，推薦的是「聚餐類型＋集合點」，真實店家請點「地圖找店」自行查證營業時間與訂位。<button type="button" data-open-about>完整使用警語</button></p>
+  </header>
+
+  <!-- ① 成員 -->
+  <section class="card">
+    <h2><span class="step">1</span>誰要來？</h2>
+    <p class="hint">每人填出發的捷運站、交通方式、預算和不能吃的東西；不想一個個填，也可以只填「總人數」。</p>
+    <div class="presets" id="presets"></div>
+    <div class="layout">
+      <div>
+        <div class="members" id="members"></div>
+        <div class="mbar">
+          <button class="btn" id="addMember" type="button">＋ 新增成員</button>
+          <button class="btn ghost" id="clearMembers" type="button">清空</button>
+          <span class="count">總人數 <input type="number" id="headcount" min="1" max="200" aria-label="總人數"> 人 <span id="headHint"></span></span>
+        </div>
+      </div>
+      <div class="table-box">
+        <svg id="tableSvg" viewBox="0 0 280 280" role="img" aria-label="圓桌座位示意"></svg>
+        <div class="legend"><span><i class="dot" style="background:var(--accent)"></i>有飲食限制</span><span><i class="dot" style="background:var(--green)"></i>沒有限制</span><span><i class="dot" style="background:var(--line)"></i>未填名單</span></div>
+        <div class="summary" id="summary"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 條件 -->
+  <section class="card">
+    <h2><span class="step">2</span>這次聚會</h2>
+    <div class="conds">
+      <div class="field"><span>時段</span><div class="seg" data-key="slot"><button type="button" data-v="L">☀ 午餐</button><button type="button" data-v="D">🌙 晚餐</button><button type="button" data-v="N">🌃 宵夜</button></div></div>
+      <div class="field"><span>場合</span><div class="seg" data-key="occasion"><button type="button" data-v="casual">輕鬆聚</button><button type="button" data-v="bday">慶生／慶祝</button><button type="button" data-v="biz">商務／正式</button><button type="button" data-v="family">家族聚餐</button></div></div>
+      <label class="field"><span>每人預算上限（沒填的成員用這個）</span><input type="number" id="budget" min="100" step="50" inputmode="numeric"></label>
+      <div class="field"><span>其他需求</span>
+        <div class="checks">
+          <label><input type="checkbox" id="cRoom">需要包廂／不吵</label>
+          <label><input type="checkbox" id="cKids">有小孩</label>
+          <label><input type="checkbox" id="cElder">有長輩</label>
+          <label><input type="checkbox" id="cDrink">想喝酒</label>
+        </div>
+      </div>
+    </div>
+    <div class="go">
+      <button class="btn primary big" id="btnGo" type="button">🍽 幫我們決定！</button>
+      <button class="btn" id="btnShare" type="button">🔗 分享這組條件</button>
+    </div>
+  </section>
+
+  <!-- ③ 結果 -->
+  <div id="results">
+    <section class="card" id="hubCard">
+      <h2><span class="step">3</span>📍 對大家最公平的集合點</h2>
+      <p class="hint">依每人出發站與交通方式估算到站時間，優先讓「最遠的那個人」不要太遠（直線距離推估，不同線加一次轉乘時間，僅供參考）。</p>
+      <div class="hubs" id="hubs"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">4</span>🍲 推薦聚餐類型</h2>
+      <p class="hint" id="pickHint"></p>
+      <div class="picks" id="picks"></div>
+      <div class="go" style="margin:12px 0 0">
+        <button class="btn" id="btnMore" type="button">🔄 都不想吃，換一批</button>
+        <button class="btn primary" id="btnAi" type="button">🤖 AI 推薦具體店家（選用）</button>
+      </div>
+      <div id="aiLoading"><span id="aiMsg">AI 正在翻美食地圖…</span> <span class="note-s" id="aiSec"></span><div class="prog"><i id="aiProg"></i></div><button class="btn sm" id="aiCancel" type="button">取消</button></div>
+      <div class="ai-list" id="aiList"></div>
+      <details class="why-not" id="whyNot"><summary>為什麼沒有推薦某些類型？</summary><ul id="whyList"></ul></details>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">5</span>🎯 還是選不出來？直接拍板</h2>
+      <div class="decide">
+        <div class="wheel-box">
+          <div class="wheel-wrap"><div class="pointer"></div><canvas id="wheel" width="580" height="580"></canvas></div>
+          <div class="wheel-result" id="wheelResult">轉盤上是目前的推薦前幾名</div>
+          <button class="btn primary" id="btnSpin" type="button">🎡 轉一下</button>
+        </div>
+        <div>
+          <div class="tabs"><button type="button" class="on" data-tab="vote">🗳 現場輪流投</button><button type="button" data-tab="line">💬 丟到 LINE 群組投</button></div>
+          <div id="tabVote">
+            <p class="hint">手機傳下去，每人點一下想吃的；投完按「看結果」。</p>
+            <div class="votes" id="votes"></div>
+            <div class="go" style="justify-content:flex-start;margin:10px 0 0">
+              <button class="btn sm" id="voteUndo" type="button">↩ 撤銷上一票</button>
+              <button class="btn sm" id="voteClear" type="button">清除票數</button>
+              <button class="btn sm primary" id="voteDone" type="button">看結果</button>
+            </div>
+          </div>
+          <div id="tabLine" hidden>
+            <p class="hint">複製下面的投票訊息貼到群組，大家回覆數字；附的連結打開就能看到同一份條件與推薦。</p>
+            <textarea id="lineVote" readonly style="width:100%;min-height:180px;border:1px solid var(--line);border-radius:10px;padding:8px;background:var(--panel2)"></textarea>
+            <div class="go" style="justify-content:flex-start;margin:8px 0 0"><button class="btn primary sm" id="copyVote" type="button">📋 複製投票訊息</button></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card">
+    <h2>📒 聚餐紀錄</h2>
+    <p class="hint">決定好的聚餐會存在這台裝置；最近吃過的類型，下次推薦會稍微往後排，避免一直吃同一種。</p>
+    <div class="history" id="history"></div>
+    <div class="go" style="justify-content:flex-start;margin:10px 0 0">
+      <button class="btn sm" id="histExport" type="button">⬇ 匯出 JSON</button>
+      <label class="btn sm" style="cursor:pointer">⬆ 匯入 JSON<input type="file" id="histImport" accept=".json,application/json" hidden></label>
+      <button class="btn sm ghost" id="histClear" type="button">清除全部紀錄</button>
+    </div>
+  </section>
+</div>
+
+<footer class="site">
+  <div class="wrap">
+    <div><strong>使用警語：</strong>集合點與交通時間依直線距離粗估、聚餐類型的人均價位為一般行情，皆<b>非即時資料</b>；AI 推薦的店家可能已歇業或資訊有誤，請務必自行查證。飲食限制（尤其過敏）請直接向店家確認。
+      <details><summary>完整警語與隱私說明</summary>
+        <p>本工具以內建的聚餐類型資料與規則計算推薦，不連線查詢任何真實店家；成員名單、聚餐紀錄、設定與 API 金鑰都只存在你的瀏覽器。使用「AI 推薦具體店家」時，聚會條件（不含 API 金鑰以外的個資，暱稱也不會送出）會直接傳給你選擇的 AI 服務商，費用由你與服務商自行負擔。分享連結會把成員暱稱、出發站與飲食限制編碼在網址裡，請只分享給同行的人。本工具與創作者不對聚餐結果、店家服務或任何因此產生的損失負責。</p>
+      </details>
+    </div>
+    <div class="row">
+      <span>製作：Mark Tsai（蔡豐全）｜<a href="mailto:tsaimark@gmail.com">tsaimark@gmail.com</a>｜<a href="manual.html#creator" target="_blank" rel="noopener">創作者資料</a>｜<a href="manual.html" target="_blank" rel="noopener">操作手冊</a>｜<button type="button" data-open-about style="border:0;background:none;padding:0;color:var(--accent);cursor:pointer;text-decoration:underline;font-size:inherit">使用警語</button></span>
+      <img src="https://visitor-badge.laobi.icu/badge?page_id=m255525.groupdiningdecider" alt="訪客次數" height="20">
+    </div>
+    <p style="margin:8px 0 0">本工具僅供教學、課程及個人使用，禁止未經授權公開發布、販售或商業化使用。</p>
+  </div>
+</footer>
+
+<!-- 設定 -->
+<div class="modal-bg" id="setBg">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <button class="x" type="button" data-close aria-label="關閉">✕</button>
+    <h2 id="setTitle">⚙ 常用設定</h2>
+    <div class="sect">預設值</div>
+    <div class="srow"><span>我的暱稱</span><input type="text" id="sName" maxlength="12" placeholder="新增名單時第一位用這個"></div>
+    <div class="srow"><span>我常出發的站</span><select id="sStation"></select></div>
+    <div class="srow"><span>預設每人預算</span><input type="number" id="sBudget" min="100" step="50"></div>
+    <div class="srow"><span>預設時段</span><select id="sSlot"><option value="L">午餐</option><option value="D">晚餐</option><option value="N">宵夜</option></select></div>
+    <div class="sect">顯示</div>
+    <div class="srow"><span>字級</span><select id="sFont"><option value="s">小</option><option value="m">中</option><option value="l">大（長輩友善）</option></select></div>
+    <div class="srow"><span>外觀</span><select id="sTheme"><option value="auto">跟隨系統</option><option value="light">亮色</option><option value="dark">暗色</option></select></div>
+    <div class="srow"><span>減少動畫</span><label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="sReduce" style="width:auto">轉盤直接出結果</label></div>
+    <div class="sect">AI 推薦店家（選用，自備金鑰）</div>
+    <div class="srow"><span>服務商</span><select id="aiProvider"><option value="gemini">Google Gemini</option><option value="openrouter">OpenRouter</option><option value="openai">OpenAI</option><option value="claude">Anthropic Claude</option></select></div>
+    <div class="srow"><span>模型</span><input type="text" id="aiModel"></div>
+    <div class="srow"><span>API 金鑰</span><input type="password" id="aiKey" autocomplete="off" placeholder="只存在這台裝置"></div>
+    <p class="note-s">金鑰只存在你的瀏覽器，呼叫時直接送到服務商官方 API。沒有金鑰也能正常使用規則式推薦。</p>
+    <div class="sect">關於本工具</div>
+    <div class="chips" style="gap:6px">
+      <a class="btn sm" href="manual.html" target="_blank" rel="noopener" style="text-decoration:none">📖 操作手冊</a>
+      <button class="btn sm" type="button" data-open-about>⚠ 使用警語</button>
+      <button class="btn sm" type="button" data-open-about="creator">👤 創作者資訊</button>
+      <button class="btn sm" type="button" data-install>📲 加入主畫面</button>
+    </div>
+    <p class="note-s" style="display:flex;align-items:center;gap:8px">訪客數 <img src="https://visitor-badge.laobi.icu/badge?page_id=m255525.groupdiningdecider" alt="訪客次數" height="20"></p>
+    <div class="foot"><button class="btn" id="setReset" type="button">恢復預設</button><button class="btn primary" type="button" data-close>完成</button></div>
+  </div>
+</div>
+
+<!-- 關於／警語 -->
+<div class="modal-bg" id="aboutBg">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <button class="x" type="button" data-close aria-label="關閉">✕</button>
+    <h2 id="aboutTitle">ℹ 關於聚餐決定器</h2>
+    <p class="note-s" style="font-size:.92rem">把一群人的人數、預算、飲食限制與交通整合起來，找出公平的集合點和適合的聚餐類型。<a href="manual.html" target="_blank" rel="noopener">📖 操作手冊</a></p>
+    <div class="sect">⚠ 使用警語</div>
+    <ul class="warn">
+      <li>交通時間依<b>出發站到集合站的直線距離</b>和交通方式粗估，沒有計算實際路線、轉乘與塞車，<b>只能當比較參考</b>。</li>
+      <li>推薦的是「聚餐類型＋集合點」，人均價位是一般行情，<b>不是任何特定店家的報價</b>；請點「地圖找店」自行查證營業時間、價位與訂位。</li>
+      <li>飲食限制只是分類判斷（例如火鍋多半能點素食鍋）。<b>食物過敏、宗教飲食（如清真）請務必直接向店家確認</b>。</li>
+      <li>AI 推薦的店家由語言模型依記憶產生，<b>可能已歇業、搬遷或根本不存在</b>，一律標示「請查證」。</li>
+      <li>目前只涵蓋台北捷運與新北捷運路網（不含機場捷運與台鐵），其他地區請改用「只填總人數」模式。</li>
+      <li>資料只存在這台裝置；分享連結會帶有成員暱稱、出發站與飲食限制，請只傳給同行的人。</li>
+      <li>僅供教學、課程及個人使用，禁止未經授權公開發布、販售或商業化使用。</li>
+    </ul>
+    <div class="creator-box" id="creatorBox">
+      <p style="margin:0"><strong>創作者：Mark Tsai（蔡豐全）</strong></p>
+      <p style="margin:4px 0">勞動力發展署創業顧問（2017 起）、經濟部 SBIR 海選專案評審委員（2019－2024），長期擔任小型企業人力提升計畫顧問與多項政府計畫業師、評審委員；專長銷售數據分析、AI 工具運用、政府補助計畫申請、創業與跨境電商。</p>
+      <p style="margin:0"><a href="manual.html#creator" target="_blank" rel="noopener">完整經歷與證照</a>｜<a href="mailto:tsaimark@gmail.com">tsaimark@gmail.com</a></p>
+    </div>
+    <div class="foot">
+      <span class="note-s" style="margin-right:auto;display:flex;align-items:center;gap:6px">訪客數 <img src="https://visitor-badge.laobi.icu/badge?page_id=m255525.groupdiningdecider" alt="訪客次數" height="20"></span>
+      <button class="btn" type="button" data-install>📲 加入主畫面</button>
+      <button class="btn primary" type="button" data-close>我知道了</button>
+    </div>
+  </div>
+</div>
+
+<!-- 拍板 -->
+<div class="modal-bg" id="decBg">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="decTitle">
+    <button class="x" type="button" data-close aria-label="關閉">✕</button>
+    <h2 id="decTitle">✅ 就決定是它！</h2>
+    <div class="srow"><span>聚餐類型</span><div id="decWhat" style="font-weight:700"></div></div>
+    <div class="srow"><span>集合站</span><select id="decHub"></select></div>
+    <div class="srow"><span>日期時間</span><input type="text" id="decWhen" placeholder="例如：11/15（六）18:30"></div>
+    <div class="srow"><span>餐廳（選填）</span><input type="text" id="decPlace" placeholder="訂好位再填店名"></div>
+    <div class="sect">LINE 群組公告</div>
+    <textarea id="decText" readonly></textarea>
+    <div class="foot">
+      <button class="btn" id="decCopy" type="button">📋 複製公告</button>
+      <button class="btn primary" id="decSave" type="button">💾 存到聚餐紀錄</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status"></div>
+
+<script src="mrt-stations-data.js"></script>
+<script>
+(function(){
+  "use strict";
+  var $ = function(id){ return document.getElementById(id); };
+  function load(k, fb){ try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? fb : v; } catch(e){ return fb; } }
+  function save(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+  function toast(msg){ var t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(toast._t); toast._t = setTimeout(function(){ t.classList.remove("show"); }, 2600); }
+
+  var STORE = {state:"gddState", settings:"gddSettings", api:"gddApi", history:"gddHistory", warn:"gddWarnSeen"};
+  var AI_DEFAULT_MODEL = {gemini:"gemini-3.5-flash", openrouter:"google/gemini-3.5-flash", openai:"gpt-5-mini", claude:"claude-haiku-5-5"};
+
+  /* ================= 基本資料 ================= */
+  var DIETS = [["veg","全素"],["lacto","蛋奶素"],["nobeef","不吃牛"],["nopork","不吃豬"],["nospicy","不吃辣"],["seafood","海鮮過敏"],["halal","清真"],["lowcarb","控糖低醣"],["noraw","不吃生食"]];
+  var DIET_LABEL = {}; DIETS.forEach(function(d){ DIET_LABEL[d[0]] = d[1]; });
+  var CATS = ["中式","日式","韓式","西式","東南亞","異國","鍋物","燒烤","清淡健康","重口味","甜點咖啡"];
+  var MODES = {mrt:{n:"捷運",base:6,k:2.2}, bus:{n:"公車",base:8,k:3.2}, car:{n:"開車",base:8,k:2.0}, scooter:{n:"機車",base:4,k:2.0}, walk:{n:"步行",base:0,k:13}};
+  var SLOT_LABEL = {L:"午餐", D:"晚餐", N:"宵夜"};
+  var OCC_LABEL = {casual:"輕鬆聚", bday:"慶生／慶祝", biz:"商務／正式", family:"家族聚餐"};
+  var LINE_ORDER = ['板南線','淡水信義線','松山新店線','中和新蘆線','文湖線','環狀線','安坑輕軌','淡海輕軌','三鶯線'];
+  var STATIONS = window.MRT_STATIONS || [];
+  var ST = {}; STATIONS.forEach(function(s){ ST[s.name] = s; });
+
+  // 集合點候選：餐廳多的大站。park＝周邊停車較方便、late＝宵夜選擇多、biz＝商務餐廳多、room＝包廂／宴會餐廳多
+  var HUBS = [
+    {n:"台北車站", f:"biz room", d:"轉運樞紐、百貨美食街"},
+    {n:"中山", f:"biz late room", d:"南西商圈、條通居酒屋"},
+    {n:"西門", f:"late", d:"年輕人多、小吃與吃到飽"},
+    {n:"東門", f:"", d:"永康街、鼎泰豐一帶"},
+    {n:"忠孝復興", f:"biz room park", d:"東區百貨、百貨停車場"},
+    {n:"忠孝敦化", f:"biz late", d:"東區巷弄餐酒館"},
+    {n:"市政府", f:"biz room park", d:"信義商圈百貨"},
+    {n:"台北101/世貿", f:"biz room park", d:"信義區高樓餐廳"},
+    {n:"國父紀念館", f:"biz", d:"東區延伸、平價與異國料理"},
+    {n:"公館", f:"late", d:"學生商圈、平價選擇多"},
+    {n:"古亭", f:"", d:"師大周邊、巷弄小店"},
+    {n:"大安", f:"biz", d:"復興南路、清粥小菜與宵夜"},
+    {n:"科技大樓", f:"", d:"和平東路、家常餐廳"},
+    {n:"南京復興", f:"biz late room", d:"商辦區、熱炒與日料"},
+    {n:"松江南京", f:"biz room", d:"商辦區、合菜餐廳"},
+    {n:"雙連", f:"late", d:"寧夏夜市、赤峰街"},
+    {n:"民權西路", f:"", d:"大同區老店"},
+    {n:"松山", f:"late park", d:"饒河夜市、五分埔"},
+    {n:"南港", f:"biz park", d:"Citylink、南港車站"},
+    {n:"內湖", f:"biz park", d:"內湖科技園區周邊"},
+    {n:"港墘", f:"biz park", d:"瑞光路商辦、大型餐廳"},
+    {n:"大直", f:"room park family", d:"美麗華、大直商圈"},
+    {n:"士林", f:"late family", d:"士林夜市、天母延伸"},
+    {n:"北投", f:"family", d:"溫泉區、家庭餐廳"},
+    {n:"淡水", f:"family late", d:"老街、海景餐廳"},
+    {n:"板橋", f:"biz room park", d:"新板特區百貨、車站商圈"},
+    {n:"府中", f:"late", d:"林家花園、湳雅夜市"},
+    {n:"新埔", f:"family", d:"板橋住宅區、平價餐廳"},
+    {n:"頂溪", f:"family", d:"永和豆漿、樂華夜市"},
+    {n:"景安", f:"family park", d:"中和住宅區"},
+    {n:"新莊", f:"family park", d:"新莊廟街、副都心"},
+    {n:"三重", f:"late park", d:"三重熱炒、在地小吃"},
+    {n:"蘆洲", f:"family park", d:"蘆洲廟口"},
+    {n:"大坪林", f:"biz", d:"新店區公所周邊"},
+    {n:"七張", f:"family park", d:"裕隆城、新店商場"},
+    {n:"新店", f:"family", d:"碧潭風景區"},
+    {n:"景美", f:"late", d:"景美夜市"},
+    {n:"永安市場", f:"family", d:"中和、永和交界"},
+    {n:"土城", f:"family park", d:"土城住宅區、大型餐廳"}
+  ].filter(function(h){ return ST[h.n]; });
+
+  // 聚餐類型：p＝人均價位、s＝適合人數、d＝飲食限制（x＝幾乎不能、c＝需事先確認可客製；沒寫＝可以）
+  // room／kids／elder／biz／drink／bday：0 不適合、1 普通、2 很適合；t＝適合時段（L 午、D 晚、N 宵夜）
+  var CUISINES = [
+    {id:"hotpot", e:"🍲", n:"火鍋（個人鍋／鴛鴦鍋）", c:["鍋物","中式"], p:[350,800], s:[2,20], d:{veg:"c",lacto:"c",seafood:"c",halal:"x"}, room:1,kids:2,elder:2,biz:1,drink:1,bday:2, t:"LDN", note:"每人一鍋最好喬口味，素食鍋、不辣湯底都好點"},
+    {id:"mala", e:"🌶", n:"麻辣鍋", c:["鍋物","重口味"], p:[550,950], s:[2,16], d:{veg:"c",lacto:"c",nospicy:"c",seafood:"c",halal:"x"}, room:1,kids:1,elder:1,biz:1,drink:2,bday:1, t:"DN", note:"不吃辣的人請點鴛鴦鍋的清湯那邊"},
+    {id:"shabu", e:"🥢", n:"平價涮涮鍋吃到飽", c:["鍋物"], p:[400,700], s:[2,16], d:{veg:"c",seafood:"c",halal:"x"}, room:0,kids:2,elder:1,biz:0,drink:1,bday:1, t:"LDN", note:"份量自由、預算好控制，多半限時 90～120 分鐘"},
+    {id:"yakiniku", e:"🥩", n:"日式燒肉", c:["燒烤","日式"], p:[650,1300], s:[2,12], d:{veg:"x",lacto:"x",nobeef:"c",nopork:"c",seafood:"c",halal:"x"}, room:1,kids:1,elder:1,biz:1,drink:2,bday:2, t:"DN", note:"一邊烤一邊聊很熱鬧，衣服會有味道"},
+    {id:"korean", e:"🇰🇷", n:"韓式料理／韓式烤肉", c:["韓式","燒烤","重口味"], p:[400,800], s:[2,12], d:{veg:"c",lacto:"c",nospicy:"c",nopork:"c",halal:"x"}, room:1,kids:1,elder:1,biz:0,drink:2,bday:2, t:"LDN", note:"小菜無限續，記得問不辣的選項"},
+    {id:"taiwanese", e:"🥘", n:"台菜合菜（圓桌）", c:["中式"], p:[500,1000], s:[6,30], d:{veg:"c",lacto:"c",seafood:"c",halal:"x"}, room:2,kids:2,elder:2,biz:2,drink:2,bday:2, t:"LD", note:"人多最划算，可先請店家依飲食限制調整菜色"},
+    {id:"banquet", e:"🏮", n:"中式宴客餐廳（粵菜／江浙）", c:["中式"], p:[900,2200], s:[8,40], d:{veg:"c",lacto:"c",seafood:"c",halal:"x"}, room:2,kids:2,elder:2,biz:2,drink:2,bday:2, t:"LD", note:"壽宴、謝師宴、尾牙首選，多半要提前一週訂包廂"},
+    {id:"dimsum", e:"🥟", n:"港式飲茶", c:["中式"], p:[450,850], s:[4,16], d:{veg:"c",lacto:"c",nopork:"c",seafood:"c",halal:"x"}, room:2,kids:2,elder:2,biz:2,drink:0,bday:1, t:"LD", note:"點心一盤一盤分著吃，長輩最愛，週末午餐要訂位"},
+    {id:"hakka", e:"🐓", n:"客家菜／私房家常菜", c:["中式"], p:[400,800], s:[4,20], d:{veg:"c",lacto:"c",halal:"x"}, room:1,kids:2,elder:2,biz:1,drink:1,bday:1, t:"LD", note:"下飯家常味，適合帶長輩"},
+    {id:"stirfry", e:"🍺", n:"台式熱炒", c:["中式","重口味"], p:[300,600], s:[4,20], d:{veg:"c",lacto:"c",nospicy:"c",seafood:"c",halal:"x"}, room:1,kids:1,elder:1,biz:0,drink:2,bday:1, t:"DN", note:"一百元快炒配啤酒，熱鬧好聊天，比較吵"},
+    {id:"chacha", e:"🍞", n:"港式茶餐廳", c:["中式"], p:[200,400], s:[2,10], d:{veg:"c",lacto:"c",halal:"x"}, room:0,kids:2,elder:2,biz:0,drink:0,bday:0, t:"LDN", note:"出餐快、價位親民，適合趕時間的午餐"},
+    {id:"teishoku", e:"🍱", n:"日式定食／丼飯", c:["日式","清淡健康"], p:[250,450], s:[1,8], d:{veg:"c",lacto:"c",noraw:"c",seafood:"c",halal:"x"}, room:0,kids:1,elder:2,biz:1,drink:0,bday:0, t:"LD", note:"一人一份不用分菜，午餐 1 小時內吃得完"},
+    {id:"ramen", e:"🍜", n:"拉麵", c:["日式","重口味"], p:[250,420], s:[1,6], d:{veg:"c",lacto:"c",nopork:"c",lowcarb:"x",halal:"x"}, room:0,kids:1,elder:1,biz:0,drink:0,bday:0, t:"LDN", note:"人多要分批坐，比較適合 6 人以下"},
+    {id:"izakaya", e:"🏮", n:"日式居酒屋", c:["日式","重口味"], p:[650,1300], s:[2,12], d:{veg:"c",lacto:"c",noraw:"c",seafood:"c",halal:"x"}, room:1,kids:0,elder:1,biz:1,drink:2,bday:1, t:"DN", note:"串燒配清酒，適合下班小酌"},
+    {id:"kaitensushi", e:"🍣", n:"迴轉壽司", c:["日式"], p:[300,600], s:[1,8], d:{veg:"c",lacto:"c",seafood:"x",noraw:"c",halal:"x"}, room:0,kids:2,elder:1,biz:0,drink:0,bday:0, t:"LD", note:"小朋友最喜歡，人多可能要分兩桌"},
+    {id:"omakase", e:"🔪", n:"無菜單日本料理／割烹", c:["日式"], p:[1500,3500], s:[2,10], d:{veg:"x",lacto:"x",seafood:"x",noraw:"x",halal:"x"}, room:1,kids:0,elder:1,biz:2,drink:1,bday:1, t:"LD", note:"高檔有面子，適合招待客戶或特別紀念日"},
+    {id:"teppanyaki", e:"🔥", n:"鐵板燒", c:["燒烤","日式"], p:[650,1600], s:[2,12], d:{veg:"c",lacto:"c",nobeef:"c",seafood:"c",halal:"c"}, room:1,kids:1,elder:2,biz:2,drink:1,bday:2, t:"LD", note:"主餐可各自選，師傅現煎很有表演感"},
+    {id:"steak", e:"🥩", n:"牛排館", c:["西式"], p:[800,2200], s:[2,16], d:{veg:"x",lacto:"x",nobeef:"c",halal:"c"}, room:2,kids:1,elder:1,biz:2,drink:2,bday:2, t:"LD", note:"多半也有雞、豬、海鮮主餐可選"},
+    {id:"italian", e:"🍝", n:"義式餐廳", c:["西式"], p:[450,950], s:[2,16], d:{veg:"c",nopork:"c",seafood:"c",lowcarb:"c",halal:"c"}, room:1,kids:2,elder:1,biz:1,drink:1,bday:2, t:"LD", note:"蛋奶素選擇多，慶生可請店家準備蛋糕"},
+    {id:"brunch", e:"🍳", n:"美式餐廳／早午餐", c:["西式"], p:[300,600], s:[1,10], d:{veg:"c",lowcarb:"c",halal:"c"}, room:0,kids:2,elder:0,biz:0,drink:1,bday:1, t:"LD", note:"漢堡、早午餐，週末中午很熱門"},
+    {id:"bistro", e:"🍷", n:"餐酒館", c:["西式","重口味"], p:[650,1300], s:[2,14], d:{veg:"c",lacto:"c",halal:"c"}, room:1,kids:0,elder:0,biz:1,drink:2,bday:2, t:"DN", note:"燈光好氣氛佳，適合朋友慶生、小酌"},
+    {id:"cafe", e:"☕", n:"咖啡廳下午茶", c:["甜點咖啡","西式"], p:[300,600], s:[2,10], d:{veg:"c",lowcarb:"c"}, room:1,kids:1,elder:1,biz:1,drink:0,bday:2, t:"L", note:"不想吃大餐、只想聊天的首選"},
+    {id:"salad", e:"🥗", n:"輕食沙拉／健康餐", c:["清淡健康","西式"], p:[200,450], s:[1,10], d:{veg:"c"}, room:0,kids:0,elder:1,biz:1,drink:0,bday:0, t:"LD", note:"控制體重、低醣的人最方便"},
+    {id:"buffet", e:"🍽", n:"飯店／百匯吃到飽", c:["中式","日式","西式"], p:[950,1900], s:[2,30], d:{halal:"c"}, room:1,kids:2,elder:2,biz:1,drink:1,bday:2, t:"LD", note:"菜色最多元，飲食限制再多也有得選；假日要提前訂"},
+    {id:"veggie", e:"🌿", n:"素食／蔬食餐廳", c:["清淡健康","中式"], p:[300,750], s:[2,16], d:{}, room:1,kids:1,elder:2,biz:1,drink:0,bday:1, t:"LD", note:"全素、蛋奶素、清真、過敏者都安心，現在很多蔬食餐廳也很好吃"},
+    {id:"thai", e:"🇹🇭", n:"泰式料理", c:["東南亞","重口味"], p:[350,700], s:[2,14], d:{veg:"c",lacto:"c",nospicy:"c",seafood:"c",halal:"c"}, room:1,kids:1,elder:1,biz:0,drink:1,bday:1, t:"LD", note:"酸辣開胃，點菜時記得說不要辣"},
+    {id:"viet", e:"🇻🇳", n:"越南河粉／南洋小館", c:["東南亞","清淡健康"], p:[200,400], s:[1,8], d:{veg:"c",seafood:"c",halal:"c"}, room:0,kids:1,elder:1,biz:0,drink:0,bday:0, t:"LD", note:"清爽不油膩，價位低"},
+    {id:"indian", e:"🍛", n:"印度／中東清真料理", c:["異國","重口味"], p:[350,750], s:[2,12], d:{nospicy:"c",seafood:"c"}, room:1,kids:1,elder:1,biz:1,drink:0,bday:1, t:"LD", note:"素食選擇多、多數不用豬肉，部分店家有清真認證"},
+    {id:"goat", e:"🫕", n:"羊肉爐／薑母鴨", c:["鍋物","中式"], p:[350,700], s:[2,16], d:{veg:"x",lacto:"x",halal:"c"}, room:1,kids:1,elder:2,biz:0,drink:2,bday:0, t:"DN", note:"天冷最對味，很多店只在秋冬營業"},
+    {id:"nightmarket", e:"🏮", n:"夜市小吃巡禮", c:["中式","重口味"], p:[200,400], s:[2,10], d:{veg:"c",lacto:"c",seafood:"c",halal:"x"}, room:0,kids:2,elder:1,biz:0,drink:0,bday:0, t:"DN", needLate:true, note:"邊走邊吃、各買各的，最省錢也最沒壓力"}
+  ];
+  var CU = {}; CUISINES.forEach(function(c){ CU[c.id] = c; });
+
+  var PRESETS = [
+    {name:"🏢 同事午餐 6 人", cond:{slot:"L", occasion:"casual", budget:300, room:false, kids:false, elder:false, drink:false}, head:6, members:[
+      ["小陳","中山","walk",300,[],["日式"]],["Amy","松江南京","mrt",300,["nobeef"],[]],["阿凱","南京復興","mrt",250,[],["中式"]],["佩佩","台北車站","mrt",350,["nospicy"],["清淡健康"]],["建宏","忠孝新生","scooter",300,[],[]],["主管","大安","car",400,[],[]]]},
+    {name:"👨‍👩‍👧 家族聚餐 10 人", cond:{slot:"D", occasion:"family", budget:900, room:true, kids:true, elder:true, drink:false}, head:10, members:[
+      ["阿公阿嬤","板橋","car",900,["seafood"],["中式"]],["大伯家","新莊","car",900,[],[]],["姑姑","三重","scooter",900,["lacto"],[]],["我們家","新店","mrt",900,[],["日式"]],["表弟","淡水","mrt",700,[],[]]]},
+    {name:"🎂 朋友慶生 8 人", cond:{slot:"D", occasion:"bday", budget:800, room:false, kids:false, elder:false, drink:true}, head:8, members:[
+      ["壽星","公館","mrt",800,[],["燒烤","日式"]],["小魚","西門","mrt",700,["noraw"],[]],["Kevin","南港","mrt",800,[],["燒烤"]],["阿哲","蘆洲","scooter",700,[],["重口味"]],["Mia","士林","mrt",800,["veg"],[]],["阿翔","景美","mrt",600,[],[]],["Joe","內湖","car",900,[],["西式"]],["小安","永安市場","mrt",700,["nospicy"],[]]]},
+    {name:"🎓 跨區同學會 12 人", cond:{slot:"D", occasion:"casual", budget:650, room:true, kids:false, elder:false, drink:true}, head:12, members:[
+      ["班長","淡水","mrt",650,[],[]],["阿芳","新店","mrt",600,["nopork"],[]],["大頭","南港","car",800,[],["中式"]],["小美","土城","mrt",600,["lowcarb"],["清淡健康"]],["阿德","三峽","car",700,[],[]],["育婷","北投","mrt",650,[],["日式"]],["志明","內湖","scooter",650,[],["重口味"]],["春嬌","板橋","mrt",600,["nospicy"],[]]]}
+  ];
+
+  /* ================= 狀態 ================= */
+  var settings = Object.assign({name:"", station:"", budget:500, slot:"D", font:"m", theme:"auto", reduce:false}, load(STORE.settings, {}));
+  var DEFAULT_COND = function(){ return {slot:settings.slot || "D", occasion:"casual", budget:settings.budget || 500, room:false, kids:false, elder:false, drink:false}; };
+  var state = load(STORE.state, null);
+  if(!state || !Array.isArray(state.members)){ state = {members:[], head:0, cond:DEFAULT_COND()}; }
+  state.cond = Object.assign(DEFAULT_COND(), state.cond || {});
+  var history = load(STORE.history, []);
+  var run = {picks:[], hubs:[], shown:[], excluded:[], votes:{}, voteLog:[], rot:0, spinning:false, decided:null};
+  var uid = function(){ return "m" + Math.random().toString(36).slice(2, 9); };
+  function persist(){ save(STORE.state, state); }
+
+  /* ================= 計算工具 ================= */
+  function hav(a, b){
+    var R = 6371, toR = Math.PI / 180;
+    var dLat = (b.lat - a.lat) * toR, dLng = (b.lng - a.lng) * toR;
+    var s = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(a.lat*toR) * Math.cos(b.lat*toR) * Math.sin(dLng/2) * Math.sin(dLng/2);
+    return 2 * R * Math.asin(Math.sqrt(s));
+  }
+  function hasF(h, f){ return (" " + h.f + " ").indexOf(" " + f + " ") >= 0; }
+  function travelMin(m, hub){
+    var a = ST[m.station], b = ST[hub.n];
+    if(!a || !b) return null;
+    var d = hav(a, b), mode = MODES[m.mode] || MODES.mrt;
+    if(m.station === hub.n || d < 0.3) return m.mode === "car" ? (hasF(hub, "park") ? 5 : 10) : 2;
+    var t = mode.base + d * mode.k * (m.mode === "walk" ? 1 : 1.15);
+    if(m.mode === "car") t += hasF(hub, "park") ? 4 : 10;
+    // 搭捷運時，出發站與集合站不在同一條線就加一次轉乘時間
+    if(m.mode === "mrt" && !a.lines.some(function(l){ return b.lines.indexOf(l) >= 0; })) t += 7;
+    return Math.round(t);
+  }
+  function groupInfo(){
+    var ms = state.members, n = Math.max(state.head || 0, ms.length, 1);
+    var budgets = ms.map(function(m){ return +m.budget || 0; }).filter(function(b){ return b > 0; });
+    var unfilled = n - ms.length;
+    if(unfilled > 0 || budgets.length < ms.length) budgets.push(+state.cond.budget || 500);
+    var budget = budgets.length ? Math.min.apply(null, budgets) : (+state.cond.budget || 500);
+    var avgBudget = budgets.length ? Math.round(budgets.reduce(function(a, b){ return a + b; }, 0) / budgets.length) : budget;
+    var diets = {};
+    ms.forEach(function(m){ (m.diet || []).forEach(function(k){ (diets[k] = diets[k] || []).push(m.name || "某人"); }); });
+    var wanters = ms.filter(function(m){ return m.wants && m.wants.length; });
+    var drivers = ms.filter(function(m){ return m.mode === "car"; }).length;
+    var located = ms.filter(function(m){ return ST[m.station]; });
+    return {n:n, budget:budget, avgBudget:avgBudget, diets:diets, wanters:wanters, drivers:drivers, located:located, c:state.cond};
+  }
+  function rankHubs(g){
+    if(!g.located.length) return [];
+    return HUBS.map(function(h){
+      var rows = g.located.map(function(m){ return {m:m, t:travelMin(m, h)}; });
+      var ts = rows.map(function(r){ return r.t; });
+      var max = Math.max.apply(null, ts), avg = ts.reduce(function(a, b){ return a + b; }, 0) / ts.length;
+      return {hub:h, rows:rows, max:max, avg:Math.round(avg), cost:0.6 * max + 0.4 * avg};
+    }).sort(function(a, b){ return a.cost - b.cost; });
+  }
+  function recentIds(){ return history.slice(0, 3).map(function(h){ return h.cuisine; }); }
+
+  function evalCuisine(cu, g){
+    var c = g.c, out = null;
+    if(cu.p[0] > g.budget * 1.15) return {out:"人均約 " + cu.p[0] + " 元起，超過最低預算 " + g.budget + " 元"};
+    if(cu.t.indexOf(c.slot) < 0) return {out:"這類店通常不適合" + SLOT_LABEL[c.slot]};
+    if(g.n > cu.s[1] * 1.6) return {out:g.n + " 人太多，這類店不好一起坐"};
+    var customs = [], customPeople = {};
+    Object.keys(g.diets).some(function(k){
+      var v = cu.d[k];
+      if(v === "x"){ out = g.diets[k].join("、") + "（" + DIET_LABEL[k] + "）幾乎沒得吃"; return true; }
+      if(v === "c"){ customs.push(DIET_LABEL[k] + "：" + g.diets[k].join("、")); g.diets[k].forEach(function(p){ customPeople[p] = 1; }); }
+      return false;
+    });
+    if(out) return {out:out};
+    var parts = {};
+    // 預算 25
+    var b = g.budget;
+    if(cu.p[1] <= b) parts.budget = 25;
+    else if(cu.p[0] <= b) parts.budget = Math.max(10, Math.round(25 * (b - cu.p[0]) / (cu.p[1] - cu.p[0]) + 8));
+    else parts.budget = 5;
+    parts.budget = Math.min(25, parts.budget);
+    // 飲食 20
+    parts.diet = Math.max(0, 20 - 5 * Object.keys(customPeople).length);
+    // 人數 10
+    parts.size = g.n >= cu.s[0] && g.n <= cu.s[1] ? 10 : (g.n < cu.s[0] ? 6 : Math.max(2, 10 - (g.n - cu.s[1])));
+    // 場合 15
+    if(c.occasion === "biz") parts.occ = cu.biz * 7.5;
+    else if(c.occasion === "bday") parts.occ = cu.bday * 7.5;
+    else if(c.occasion === "family") parts.occ = (cu.elder + cu.kids + cu.room) * 2.5;
+    else parts.occ = cu.biz === 2 && cu.p[0] > 800 ? 7 : 13;
+    // 陪同與需求 15
+    var need = 15;
+    if(c.kids) need -= (2 - cu.kids) * 3;
+    if(c.elder) need -= (2 - cu.elder) * 3;
+    if(c.room) need -= cu.room === 0 ? 6 : (cu.room === 1 ? 2 : 0);
+    if(c.drink) need -= cu.drink === 0 ? 5 : (cu.drink === 1 ? 1 : 0);
+    parts.need = Math.max(0, need);
+    // 想吃 15
+    if(g.wanters.length){
+      var hit = g.wanters.filter(function(m){ return m.wants.some(function(w){ return cu.c.indexOf(w) >= 0; }); }).length;
+      parts.want = Math.round(15 * hit / g.wanters.length);
+    } else parts.want = 9;
+    var total = parts.budget + parts.diet + parts.size + parts.occ + parts.need + parts.want;
+    var recent = recentIds().indexOf(cu.id) >= 0;
+    if(recent) total -= 8;
+    var badges = [];
+    if(customs.length) customs.forEach(function(s){ badges.push({k:"warn", t:"需先問店家 · " + s}); });
+    else if(Object.keys(g.diets).length) badges.push({k:"ok", t:"飲食限制都 OK"});
+    if(c.room && cu.room === 1) badges.push({k:"", t:"部分店家有包廂，記得問"});
+    if(c.room && cu.room === 0) badges.push({k:"warn", t:"多半沒有包廂"});
+    if(cu.p[1] > b) badges.push({k:"", t:"選平價一點的店才不會超支"});
+    if(g.n > cu.s[1]) badges.push({k:"warn", t:g.n + " 人要提早訂位或分桌"});
+    if(recent) badges.push({k:"", t:"最近才吃過"});
+    return {cu:cu, parts:parts, total:Math.round(Math.max(0, Math.min(100, total))), badges:badges};
+  }
+  function hubBonus(hr, cu, g){
+    var h = hr.hub, bn = 0, c = g.c;
+    if(cu.needLate || c.slot === "N") bn += hasF(h, "late") ? 6 : (cu.needLate ? -12 : 0);
+    if(g.drivers) bn += hasF(h, "park") ? 4 : 0;
+    if(c.occasion === "biz" && hasF(h, "biz")) bn += 3;
+    if((c.room || c.occasion === "family") && (hasF(h, "room") || hasF(h, "family"))) bn += 3;
+    return bn;
+  }
+  function decide(skip){
+    var g = groupInfo();
+    var hubs = rankHubs(g);
+    var cand = hubs.slice(0, 6);
+    var scored = [], excluded = [];
+    CUISINES.forEach(function(cu){
+      var r = evalCuisine(cu, g);
+      if(r.out){ excluded.push({cu:cu, why:r.out}); return; }
+      var best = null;
+      if(cand.length){
+        cand.forEach(function(hr, i){
+          var v = -hr.cost + hubBonus(hr, cu, g) * 2;
+          if(!best || v > best.v) best = {hr:hr, v:v, i:i};
+        });
+        r.hub = best.hr;
+        r.rankScore = r.total + (hubBonus(best.hr, cu, g) - best.i * 0.5) / 100;
+      } else {
+        r.hub = null; r.rankScore = r.total;
+      }
+      scored.push(r);
+    });
+    scored.sort(function(a, b){ return b.rankScore - a.rankScore || b.total - a.total; });
+    var pool = scored.filter(function(r){ return (skip || []).indexOf(r.cu.id) < 0; });
+    if(pool.length < 3) pool = scored.slice();
+    return {g:g, hubs:hubs, picks:pool.slice(0, 5), all:scored, excluded:excluded};
+  }
+
+  /* ================= 成員介面 ================= */
+  var COLORS = ["#c8553d","#d99a2b","#4f8a4a","#3f7ea6","#8a5aa8","#b5677d","#5a8f8a","#a0703c"];
+  function lineOf(name){ var s = ST[name]; return s ? s.lines[0] : ""; }
+  function lineOptions(sel){
+    var present = {}; STATIONS.forEach(function(s){ s.lines.forEach(function(l){ present[l] = 1; }); });
+    return '<option value="">選路線</option>' + LINE_ORDER.filter(function(l){ return present[l]; }).map(function(l){ return '<option' + (l === sel ? " selected" : "") + ">" + l + "</option>"; }).join("");
+  }
+  function stationOptions(line, sel){
+    if(!line) return '<option value="">先選路線</option>';
+    return '<option value="">選車站</option>' + STATIONS.filter(function(s){ return s.lines.indexOf(line) >= 0; }).map(function(s){ return '<option' + (s.name === sel ? " selected" : "") + ">" + esc(s.name) + "</option>"; }).join("");
+  }
+  function memberHtml(m, i){
+    var line = m.line || lineOf(m.station);
+    return '<div class="mcard" data-id="' + m.id + '">' +
+      '<button class="del" type="button" data-act="del" aria-label="移除">✕</button>' +
+      '<div class="row"><span class="avatar" style="background:' + COLORS[i % COLORS.length] + '">' + esc((m.name || "?").slice(0, 1)) + '</span><input type="text" data-f="name" value="' + esc(m.name) + '" maxlength="12" placeholder="暱稱" aria-label="暱稱"></div>' +
+      '<div class="row"><label>出發站</label><select data-f="line" aria-label="路線">' + lineOptions(line) + '</select><select data-f="station" aria-label="車站">' + stationOptions(line, m.station) + '</select></div>' +
+      '<div class="row"><label>交通</label><select data-f="mode" aria-label="交通方式">' + Object.keys(MODES).map(function(k){ return '<option value="' + k + '"' + (m.mode === k ? " selected" : "") + ">" + MODES[k].n + "</option>"; }).join("") + '</select>' +
+      '<label style="min-width:auto">預算</label><input type="number" data-f="budget" value="' + (m.budget || "") + '" min="0" step="50" style="width:6.5em" placeholder="' + (state.cond.budget || 500) + '" aria-label="個人預算">元</div>' +
+      '<div class="row"><label>不能吃</label><div class="chips">' + DIETS.map(function(d){ return '<span class="chip' + ((m.diet || []).indexOf(d[0]) >= 0 ? " on" : "") + '" data-diet="' + d[0] + '" role="button" tabindex="0">' + d[1] + "</span>"; }).join("") + '</div></div>' +
+      '<div class="row"><label>想吃</label><div class="chips">' + CATS.map(function(c){ return '<span class="chip want' + ((m.wants || []).indexOf(c) >= 0 ? " on" : "") + '" data-want="' + c + '" role="button" tabindex="0">' + c + "</span>"; }).join("") + '</div></div>' +
+      "</div>";
+  }
+  function renderMembers(){
+    var box = $("members");
+    box.innerHTML = state.members.length ? state.members.map(memberHtml).join("") : '<p class="empty">還沒有成員。可以按「＋ 新增成員」，或點上方的快速範例；也能只在右下填總人數。</p>';
+    renderHead();
+  }
+  function renderHead(){
+    var n = Math.max(state.head || 0, state.members.length);
+    $("headcount").value = n || "";
+    var extra = n - state.members.length;
+    $("headHint").textContent = extra > 0 && state.members.length ? "（另有 " + extra + " 位沒填名單，視為不挑食）" : "";
+    renderTable(); renderSummary();
+  }
+  function findM(id){ return state.members.filter(function(m){ return m.id === id; })[0]; }
+  $("members").addEventListener("input", function(e){
+    var card = e.target.closest(".mcard"); if(!card) return;
+    var m = findM(card.dataset.id), f = e.target.dataset.f; if(!m || !f) return;
+    if(f === "name"){ m.name = e.target.value.trim(); card.querySelector(".avatar").textContent = (m.name || "?").slice(0, 1); renderTable(); }
+    if(f === "budget"){ m.budget = +e.target.value || 0; renderSummary(); }
+    persist();
+  });
+  $("members").addEventListener("change", function(e){
+    var card = e.target.closest(".mcard"); if(!card) return;
+    var m = findM(card.dataset.id), f = e.target.dataset.f; if(!m || !f) return;
+    if(f === "line"){ m.line = e.target.value; m.station = ""; card.querySelector('[data-f="station"]').innerHTML = stationOptions(m.line, ""); }
+    if(f === "station"){ m.station = e.target.value; }
+    if(f === "mode"){ m.mode = e.target.value; }
+    persist(); renderSummary();
+  });
+  function chipToggle(e){
+    var chip = e.target.closest(".chip"); if(!chip) return;
+    var card = chip.closest(".mcard"), m = findM(card.dataset.id); if(!m) return;
+    var key = chip.dataset.diet ? "diet" : "wants", v = chip.dataset.diet || chip.dataset.want;
+    m[key] = m[key] || [];
+    var i = m[key].indexOf(v);
+    if(i >= 0) m[key].splice(i, 1); else m[key].push(v);
+    // 全素已涵蓋蛋奶素
+    if(key === "diet" && v === "veg" && i < 0){ var j = m.diet.indexOf("lacto"); if(j >= 0){ m.diet.splice(j, 1); var lc = card.querySelector('[data-diet="lacto"]'); if(lc) lc.classList.remove("on"); } }
+    if(key === "diet" && v === "lacto" && i < 0){ var k = m.diet.indexOf("veg"); if(k >= 0){ m.diet.splice(k, 1); var vc = card.querySelector('[data-diet="veg"]'); if(vc) vc.classList.remove("on"); } }
+    chip.classList.toggle("on", i < 0);
+    persist(); renderTable(); renderSummary();
+  }
+  $("members").addEventListener("click", function(e){
+    if(e.target.closest('[data-act="del"]')){
+      var card = e.target.closest(".mcard");
+      state.members = state.members.filter(function(m){ return m.id !== card.dataset.id; });
+      persist(); renderMembers(); return;
+    }
+    chipToggle(e);
+  });
+  $("members").addEventListener("keydown", function(e){ if((e.key === "Enter" || e.key === " ") && e.target.classList.contains("chip")){ e.preventDefault(); chipToggle(e); } });
+  function newMember(){
+    var first = !state.members.length && settings.name;
+    return {id:uid(), name:first ? settings.name : "成員" + (state.members.length + 1), station:first ? settings.station : "", line:"", mode:"mrt", budget:0, diet:[], wants:[]};
+  }
+  $("addMember").onclick = function(){
+    if(state.members.length >= 30){ toast("名單最多 30 人，其他人用總人數補上"); return; }
+    state.members.push(newMember());
+    if(state.head && state.head < state.members.length) state.head = state.members.length;
+    persist(); renderMembers();
+    var inputs = $("members").querySelectorAll('input[data-f="name"]'); if(inputs.length){ inputs[inputs.length - 1].select(); }
+  };
+  $("clearMembers").onclick = function(){ if(!state.members.length) return; state.members = []; state.head = 0; persist(); renderMembers(); toast("名單已清空"); };
+  $("headcount").addEventListener("change", function(){
+    var v = Math.max(+this.value || 0, state.members.length);
+    state.head = Math.min(200, v); persist(); renderHead();
+  });
+
+  function renderTable(){
+    var n = Math.max(state.head || 0, state.members.length, 1), show = Math.min(n, 24);
+    var cx = 140, cy = 140, R = 66 + Math.min(show, 16) * 2, seatR = show > 16 ? 11 : 14;
+    var svg = '<circle cx="140" cy="140" r="' + (R - 26) + '" fill="var(--panel2)" stroke="var(--line)" stroke-width="3"/>' +
+      '<circle cx="140" cy="140" r="' + (R - 40) + '" fill="none" stroke="var(--line-soft)" stroke-dasharray="4 5"/>' +
+      '<text x="140" y="136" text-anchor="middle" font-size="26">🍲</text>' +
+      '<text x="140" y="160" text-anchor="middle" font-size="13" fill="var(--dim)">' + n + ' 人</text>';
+    for(var i = 0; i < show; i++){
+      var a = -Math.PI / 2 + i * 2 * Math.PI / show, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
+      var m = state.members[i], col = !m ? "var(--line)" : ((m.diet || []).length ? "var(--accent)" : "var(--green)");
+      var label = m ? (m.name || "?").slice(0, 1) : "";
+      var title = m ? (m.name || "") + ((m.diet || []).length ? "：" + m.diet.map(function(k){ return DIET_LABEL[k]; }).join("、") : "") : "未填名單";
+      svg += '<g><title>' + esc(title) + '</title><circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + seatR + '" fill="' + col + '"/>' +
+        (label ? '<text x="' + x.toFixed(1) + '" y="' + (y + 4.5).toFixed(1) + '" text-anchor="middle" font-size="' + (seatR > 12 ? 13 : 11) + '" fill="#fff" font-weight="700">' + esc(label) + "</text>" : "") + "</g>";
+    }
+    if(n > show) svg += '<text x="140" y="276" text-anchor="middle" font-size="12" fill="var(--dim)">（只畫出前 24 位）</text>';
+    $("tableSvg").innerHTML = svg;
+  }
+  function renderSummary(){
+    var g = groupInfo();
+    var diets = Object.keys(g.diets).map(function(k){ return DIET_LABEL[k] + " " + g.diets[k].length + " 人"; });
+    var noSt = state.members.filter(function(m){ return !ST[m.station]; }).length;
+    $("summary").innerHTML = "👥 <b>" + g.n + "</b> 人｜💰 每人上限 <b>" + g.budget + "</b> 元" + (g.avgBudget !== g.budget ? "（平均 " + g.avgBudget + "）" : "") +
+      "<br>🚫 " + (diets.length ? esc(diets.join("、")) : "沒有飲食限制") +
+      (g.drivers ? "<br>🚗 " + g.drivers + " 人開車" : "") +
+      (state.members.length ? "<br>📍 " + (state.members.length - noSt) + " 人填了出發站" + (noSt ? "，" + noSt + " 人沒填（不計入集合點）" : "") : "");
+  }
+
+  /* ================= 條件介面 ================= */
+  function renderCond(){
+    var c = state.cond;
+    document.querySelectorAll(".seg").forEach(function(seg){
+      var key = seg.dataset.key;
+      seg.querySelectorAll("button").forEach(function(b){ b.classList.toggle("on", b.dataset.v === c[key]); });
+    });
+    $("budget").value = c.budget || "";
+    $("cRoom").checked = !!c.room; $("cKids").checked = !!c.kids; $("cElder").checked = !!c.elder; $("cDrink").checked = !!c.drink;
+  }
+  document.querySelectorAll(".seg").forEach(function(seg){
+    seg.addEventListener("click", function(e){
+      var b = e.target.closest("button"); if(!b) return;
+      state.cond[seg.dataset.key] = b.dataset.v; persist(); renderCond();
+    });
+  });
+  $("budget").addEventListener("change", function(){ state.cond.budget = Math.max(100, +this.value || 500); persist(); renderCond(); renderSummary(); renderMembers(); });
+  [["cRoom","room"],["cKids","kids"],["cElder","elder"],["cDrink","drink"]].forEach(function(p){
+    $(p[0]).addEventListener("change", function(){ state.cond[p[1]] = this.checked; persist(); });
+  });
+
+  function renderPresets(){
+    $("presets").innerHTML = PRESETS.map(function(p, i){ return '<button class="btn sm" type="button" data-i="' + i + '">' + p.name + "</button>"; }).join("");
+  }
+  $("presets").addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    applyPreset(+b.dataset.i);
+  });
+  function applyPreset(i){
+    var p = PRESETS[i];
+    state.members = p.members.map(function(r){ return {id:uid(), name:r[0], station:r[1], line:lineOf(r[1]), mode:r[2], budget:r[3], diet:r[4].slice(), wants:r[5].slice()}; });
+    state.head = p.head;
+    state.cond = Object.assign(DEFAULT_COND(), p.cond);
+    persist(); renderMembers(); renderCond();
+    toast("已載入範例：" + p.name.replace(/^\S+\s/, ""));
+  }
+
+  /* ================= 結果 ================= */
+  function mapUrl(q){ return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q); }
+  function hubLabel(h){ return h.n + (/站$/.test(h.n) ? "" : "站"); }
+  function shortCu(cu){ return cu.n.replace(/（.*?）/g, ""); }
+  function go(keepSkip){
+    if(!keepSkip) run.shown = [];
+    var r = decide(run.shown);
+    run.hubs = r.hubs; run.picks = r.picks; run.excluded = r.excluded; run.g = r.g;
+    run.picks.forEach(function(p){ if(run.shown.indexOf(p.cu.id) < 0) run.shown.push(p.cu.id); });
+    run.votes = {}; run.voteLog = [];
+    renderHubs(); renderPicks(); renderWhyNot(); drawWheel(); renderVotes(); renderLineVote();
+    $("aiList").innerHTML = "";
+    $("results").classList.add("show");
+    $("wheelResult").textContent = "轉盤上是目前的推薦前幾名";
+  }
+  $("btnGo").onclick = function(){
+    if(!state.members.length && !state.head){ toast("先加幾位成員，或填總人數"); $("headcount").focus(); return; }
+    go(false);
+    setTimeout(function(){ $("results").scrollIntoView({behavior: settings.reduce ? "auto" : "smooth", block:"start"}); }, 30);
+  };
+  $("btnMore").onclick = function(){
+    var before = run.shown.length;
+    go(true);
+    if(run.shown.length === before){ run.shown = []; go(true); toast("已經沒有新的類型，重新從頭排"); }
+    else toast("換了一批新的");
+  };
+
+  function renderHubs(){
+    var box = $("hubs");
+    if(!run.hubs.length){
+      box.innerHTML = '<p class="empty">還沒有人填出發站，所以先不算集合點。只要有一位以上填了捷運站，就會幫大家找公平的地方。</p>';
+      return;
+    }
+    box.innerHTML = run.hubs.slice(0, 3).map(function(hr, i){
+      var h = hr.hub;
+      var tags = [];
+      if(hasF(h, "park")) tags.push("🅿 停車較方便"); if(hasF(h, "late")) tags.push("🌃 宵夜多"); if(hasF(h, "biz")) tags.push("💼 商務餐廳多"); if(hasF(h, "room")) tags.push("🚪 包廂餐廳多"); if(hasF(h, "family")) tags.push("👨‍👩‍👧 家庭友善");
+      return '<div class="hub' + (i === 0 ? " best" : "") + '"><h3>' + (i === 0 ? "🥇" : i === 1 ? "🥈" : "🥉") + " " + esc(hubLabel(h)) +
+        ' <a class="btn sm" href="' + mapUrl(hubLabel(h) + " 餐廳") + '" target="_blank" rel="noopener" style="text-decoration:none;margin-left:auto">地圖</a></h3>' +
+        '<div class="stat">平均約 <b>' + hr.avg + '</b> 分鐘・最遠 <b class="' + (hr.max > 50 ? "far" : "") + '">' + hr.max + '</b> 分鐘｜' + esc(h.d) + '</div>' +
+        '<div class="tags">' + tags.map(function(t){ return "<span>" + t + "</span>"; }).join("") + '</div>' +
+        '<table>' + hr.rows.slice().sort(function(a, b){ return b.t - a.t; }).map(function(r){
+          return "<tr><td>" + esc(r.m.name || "成員") + "</td><td>" + esc(r.m.station) + " · " + MODES[r.m.mode || "mrt"].n + '</td><td class="' + (r.t > 50 ? "far" : "") + '">約 ' + r.t + " 分</td></tr>";
+        }).join("") + "</table></div>";
+    }).join("");
+  }
+  function barHtml(label, v, max){ var w = Math.round(36 * v / max); return "<span>" + label + ' <i style="width:' + w + 'px"></i><i class="bg" style="width:' + (36 - w) + 'px"></i></span>'; }
+  function renderPicks(){
+    var g = run.g;
+    $("pickHint").textContent = g.n + " 人・" + SLOT_LABEL[g.c.slot] + "・" + OCC_LABEL[g.c.occasion] + "・每人 " + g.budget + " 元內" + (Object.keys(g.diets).length ? "・已避開不能吃的類型" : "") + "。分數越高越適合這群人。";
+    if(!run.picks.length){ $("picks").innerHTML = '<p class="empty">條件太嚴格，找不到符合的類型。試試看提高預算，或看下方「為什麼沒有推薦」。</p>'; return; }
+    $("picks").innerHTML = run.picks.map(function(p, i){
+      var cu = p.cu, h = p.hub ? p.hub.hub : null;
+      var where = h ? hubLabel(h) : "（大家的出發地附近）";
+      var q = (h ? hubLabel(h) + " " : "") + shortCu(cu);
+      return '<div class="pick"><div class="rank" title="第 ' + (i + 1) + ' 名">' + cu.e + '</div><div>' +
+        "<h3>" + (i + 1) + ". " + esc(cu.n) + '<small>' + cu.c.join("・") + "</small></h3>" +
+        '<div class="meta">📍 <b>' + esc(where) + "</b>" + (p.hub ? "（平均 " + p.hub.avg + " 分、最遠 " + p.hub.max + " 分）" : "") + "｜💰 人均約 <b>" + cu.p[0] + "–" + cu.p[1] + "</b> 元｜👥 適合 " + cu.s[0] + "–" + cu.s[1] + " 人</div>" +
+        '<div class="note-s">' + esc(cu.note) + "</div>" +
+        '<div class="badges">' + p.badges.map(function(b){ return '<span class="badge ' + b.k + '">' + esc(b.t) + "</span>"; }).join("") + "</div>" +
+        '<div class="bars">' + barHtml("預算", p.parts.budget, 25) + barHtml("飲食", p.parts.diet, 20) + barHtml("人數", p.parts.size, 10) + barHtml("場合", p.parts.occ, 15) + barHtml("需求", p.parts.need, 15) + barHtml("想吃", p.parts.want, 15) + "</div>" +
+        '</div><div class="score"><div class="num">' + p.total + '</div><div class="lbl">契合度</div></div>' +
+        '<div class="acts"><a class="btn sm" href="' + mapUrl(q) + '" target="_blank" rel="noopener" style="text-decoration:none">🗺 地圖找店</a><button class="btn sm primary" type="button" data-decide="' + cu.id + '">✅ 就決定這個</button></div></div>';
+    }).join("");
+  }
+  $("picks").addEventListener("click", function(e){ var b = e.target.closest("[data-decide]"); if(b) openDecide(b.dataset.decide); });
+  function renderWhyNot(){
+    var ex = run.excluded;
+    $("whyNot").style.display = ex.length ? "" : "none";
+    $("whyList").innerHTML = ex.map(function(x){ return "<li>" + x.cu.e + " <b>" + esc(x.cu.n) + "</b>：" + esc(x.why) + "</li>"; }).join("");
+  }
+
+  /* ================= 轉盤 ================= */
+  var WHEEL_COLORS = ["#c8553d","#d99a2b","#4f8a4a","#3f7ea6","#8a5aa8","#b5677d"];
+  function wheelItems(){ return run.picks.slice(0, 6); }
+  function drawWheel(){
+    var cv = $("wheel"), ctx = cv.getContext("2d"), items = wheelItems(), n = items.length, W = cv.width, r = W / 2;
+    ctx.clearRect(0, 0, W, W);
+    if(!n){ return; }
+    for(var i = 0; i < n; i++){
+      var a0 = -Math.PI / 2 + i * 2 * Math.PI / n, a1 = a0 + 2 * Math.PI / n;
+      ctx.beginPath(); ctx.moveTo(r, r); ctx.arc(r, r, r - 4, a0, a1); ctx.closePath();
+      ctx.fillStyle = WHEEL_COLORS[i % WHEEL_COLORS.length]; ctx.fill();
+      ctx.strokeStyle = "#fffaf2"; ctx.lineWidth = 4; ctx.stroke();
+      ctx.save(); ctx.translate(r, r); ctx.rotate((a0 + a1) / 2);
+      ctx.textAlign = "right"; ctx.fillStyle = "#fff"; ctx.font = "bold 30px 'Microsoft JhengHei', 'PingFang TC', sans-serif";
+      var label = items[i].cu.e + " " + shortCu(items[i].cu);
+      if(label.length > 9) label = label.slice(0, 9) + "…";
+      ctx.fillText(label, r - 24, 10); ctx.restore();
+    }
+    ctx.beginPath(); ctx.arc(r, r, 38, 0, 2 * Math.PI); ctx.fillStyle = "#fffaf2"; ctx.fill();
+    ctx.font = "40px sans-serif"; ctx.textAlign = "center"; ctx.fillText("🍽", r, r + 14);
+  }
+  $("btnSpin").onclick = function(){
+    var items = wheelItems(), n = items.length;
+    if(!n){ toast("先按「幫我們決定！」產生推薦"); return; }
+    if(run.spinning) return;
+    var idx = Math.floor(Math.random() * n);
+    var seg = 360 / n, target = 360 - (idx * seg + seg / 2) + (Math.random() - 0.5) * seg * 0.6;
+    var base = run.rot - (run.rot % 360);
+    run.rot = base + 360 * (settings.reduce ? 0 : 6) + target;
+    var cv = $("wheel");
+    cv.style.transition = settings.reduce ? "none" : "transform 4s cubic-bezier(.17,.67,.2,1)";
+    cv.style.transform = "rotate(" + run.rot + "deg)";
+    run.spinning = true;
+    $("wheelResult").textContent = settings.reduce ? "" : "轉轉轉……";
+    setTimeout(function(){
+      run.spinning = false;
+      var p = items[idx];
+      $("wheelResult").innerHTML = "🎉 就吃 <span style=\"color:var(--accent)\">" + esc(p.cu.n) + "</span>！ <button class=\"btn sm primary\" type=\"button\" data-decide=\"" + p.cu.id + "\">✅ 確定</button>";
+      run.lastSpin = p.cu.id;
+    }, settings.reduce ? 50 : 4100);
+  };
+  $("wheelResult").addEventListener("click", function(e){ var b = e.target.closest("[data-decide]"); if(b) openDecide(b.dataset.decide); });
+
+  /* ================= 投票 ================= */
+  document.querySelectorAll(".tabs button").forEach(function(b){
+    b.onclick = function(){
+      document.querySelectorAll(".tabs button").forEach(function(x){ x.classList.toggle("on", x === b); });
+      $("tabVote").hidden = b.dataset.tab !== "vote"; $("tabLine").hidden = b.dataset.tab !== "line";
+    };
+  });
+  function renderVotes(){
+    var total = run.voteLog.length;
+    $("votes").innerHTML = run.picks.map(function(p){
+      var v = run.votes[p.cu.id] || 0, pct = total ? Math.round(100 * v / total) : 0;
+      return '<div class="vote"><div><div class="vname">' + p.cu.e + " " + esc(shortCu(p.cu)) + "<b>" + v + ' 票</b></div><div class="vbar"><i style="width:' + pct + '%"></i></div></div><button class="btn sm" type="button" data-vote="' + p.cu.id + '">＋1</button></div>';
+    }).join("") || '<p class="empty">先產生推薦才能投票。</p>';
+  }
+  $("votes").addEventListener("click", function(e){
+    var b = e.target.closest("[data-vote]"); if(!b) return;
+    run.votes[b.dataset.vote] = (run.votes[b.dataset.vote] || 0) + 1; run.voteLog.push(b.dataset.vote);
+    renderVotes(); toast("已投 " + run.voteLog.length + " 票，傳給下一位");
+  });
+  $("voteUndo").onclick = function(){ var id = run.voteLog.pop(); if(id){ run.votes[id]--; renderVotes(); } };
+  $("voteClear").onclick = function(){ run.votes = {}; run.voteLog = []; renderVotes(); };
+  $("voteDone").onclick = function(){
+    if(!run.voteLog.length){ toast("還沒有人投票"); return; }
+    var max = 0, tops = [];
+    run.picks.forEach(function(p){ var v = run.votes[p.cu.id] || 0; if(v > max){ max = v; tops = [p]; } else if(v === max && v > 0) tops.push(p); });
+    if(tops.length > 1){
+      toast("平手！" + tops.map(function(p){ return shortCu(p.cu); }).join(" vs ") + "，用轉盤決勝負吧");
+      return;
+    }
+    openDecide(tops[0].cu.id);
+  };
+  function renderLineVote(){
+    var g = run.g;
+    var lines = ["🍽 聚餐投票（" + g.n + " 人・" + SLOT_LABEL[g.c.slot] + "・每人 " + g.budget + " 元內）", "請回覆數字："];
+    run.picks.forEach(function(p, i){ lines.push((i + 1) + ". " + p.cu.e + " " + shortCu(p.cu) + (p.hub ? " @" + hubLabel(p.hub.hub) : "") + "（人均約 " + p.cu.p[0] + "–" + p.cu.p[1] + "）"); });
+    lines.push("", "看完整條件與推薦：" + shareUrl());
+    $("lineVote").value = lines.join("\n");
+  }
+  function copyText(text, okMsg){
+    var done = function(){ toast(okMsg || "已複製"); };
+    if(navigator.clipboard && window.isSecureContext){ navigator.clipboard.writeText(text).then(done, fallback); } else fallback();
+    function fallback(){ var ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0"; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); done(); } catch(e){ toast("複製失敗，請手動選取"); } document.body.removeChild(ta); }
+  }
+  $("copyVote").onclick = function(){ copyText($("lineVote").value, "投票訊息已複製，貼到 LINE 群組吧"); };
+
+  /* ================= 分享連結 ================= */
+  function encodeShare(){
+    var data = {v:1, h:state.head, c:state.cond, m:state.members.map(function(m){ return [m.name, m.station, m.mode, m.budget || 0, m.diet || [], m.wants || []]; })};
+    return btoa(unescape(encodeURIComponent(JSON.stringify(data)))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  }
+  function shareUrl(){ return location.href.split("#")[0] + "#s=" + encodeShare(); }
+  function readShare(){
+    var m = location.hash.match(/[#&]s=([A-Za-z0-9_-]+)/); if(!m) return false;
+    try {
+      var b = m[1].replace(/-/g, "+").replace(/_/g, "/"); while(b.length % 4) b += "=";
+      var d = JSON.parse(decodeURIComponent(escape(atob(b))));
+      state.members = (d.m || []).slice(0, 30).map(function(r){ return {id:uid(), name:String(r[0] || "").slice(0, 12), station:ST[r[1]] ? r[1] : "", line:lineOf(r[1]), mode:MODES[r[2]] ? r[2] : "mrt", budget:+r[3] || 0, diet:(r[4] || []).filter(function(k){ return DIET_LABEL[k]; }), wants:(r[5] || []).filter(function(c){ return CATS.indexOf(c) >= 0; })}; });
+      state.head = Math.min(200, +d.h || 0);
+      state.cond = Object.assign(DEFAULT_COND(), d.c || {});
+      persist();
+      history.replaceState ? window.history.replaceState(null, "", location.pathname + location.search) : (location.hash = "");
+      return true;
+    } catch(e){ toast("分享連結格式不正確"); return false; }
+  }
+  $("btnShare").onclick = function(){ copyText(shareUrl(), "分享連結已複製（含成員暱稱與飲食限制，請只傳給同行的人）"); };
+
+  /* ================= 拍板與紀錄 ================= */
+  function openDecide(id){
+    var p = run.picks.filter(function(x){ return x.cu.id === id; })[0] || run.all && null;
+    var cu = CU[id]; if(!cu) return;
+    run.decided = {cuisine:id, hub:p && p.hub ? p.hub.hub.n : (run.hubs[0] ? run.hubs[0].hub.n : "")};
+    $("decWhat").textContent = cu.e + " " + cu.n;
+    var opts = run.hubs.slice(0, 5).map(function(hr){ return hr.hub.n; });
+    if(run.decided.hub && opts.indexOf(run.decided.hub) < 0) opts.unshift(run.decided.hub);
+    $("decHub").innerHTML = (opts.length ? "" : '<option value="">（未指定）</option>') + opts.map(function(n){ return '<option' + (n === run.decided.hub ? " selected" : "") + ">" + esc(n) + "</option>"; }).join("");
+    $("decPlace").value = "";
+    buildAnnounce();
+    openModal("decBg");
+  }
+  function buildAnnounce(){
+    var d = run.decided; if(!d) return;
+    var cu = CU[d.cuisine], g = run.g || groupInfo(), hub = $("decHub").value, when = $("decWhen").value.trim(), place = $("decPlace").value.trim();
+    var L = ["📣 聚餐確定囉！", "🍽 吃什麼：" + cu.e + " " + shortCu(cu) + (place ? "｜" + place : ""), "📍 集合：" + (hub ? hubLabel({n:hub}) : "待定")];
+    if(when) L.push("🕒 時間：" + when);
+    L.push("👥 人數：" + g.n + " 人", "💰 預算：人均約 " + cu.p[0] + "–" + Math.min(cu.p[1], Math.max(g.budget, cu.p[0])) + " 元");
+    var ds = Object.keys(g.diets);
+    if(ds.length){ L.push("🚫 飲食提醒（訂位時請告知店家）："); ds.forEach(function(k){ L.push("　・" + DIET_LABEL[k] + "：" + g.diets[k].join("、")); }); }
+    var hr = run.hubs.filter(function(h){ return h.hub.n === hub; })[0];
+    if(hr && hr.rows.length){ var far = hr.rows.slice().sort(function(a, b){ return b.t - a.t; })[0]; L.push("🚇 大家到站平均約 " + hr.avg + " 分鐘（最遠：" + (far.m.name || "成員") + " 約 " + far.t + " 分）"); }
+    L.push("🗺 " + mapUrl(place ? place + " " + (hub || "") : (hub ? hubLabel({n:hub}) + " " : "") + shortCu(cu)));
+    $("decText").value = L.join("\n");
+  }
+  ["decHub","decWhen","decPlace"].forEach(function(id){ $(id).addEventListener("input", buildAnnounce); $(id).addEventListener("change", buildAnnounce); });
+  $("decCopy").onclick = function(){ copyText($("decText").value, "公告已複製，貼到 LINE 群組吧"); };
+  $("decSave").onclick = function(){
+    var d = run.decided; if(!d) return;
+    var g = run.g || groupInfo();
+    history.unshift({t:Date.now(), cuisine:d.cuisine, hub:$("decHub").value, when:$("decWhen").value.trim(), place:$("decPlace").value.trim(), n:g.n, budget:g.budget, slot:g.c.slot, occasion:g.c.occasion,
+      members:state.members.map(function(m){ return [m.name, m.station, m.mode, m.budget || 0, m.diet || [], m.wants || []]; }), cond:Object.assign({}, state.cond), head:state.head});
+    history = history.slice(0, 50); save(STORE.history, history);
+    renderHistory(); closeModal("decBg"); toast("已存到聚餐紀錄 🎉");
+  };
+  function fmtDate(t){ var d = new Date(t); return (d.getMonth() + 1) + "/" + d.getDate() + " " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+  function renderHistory(){
+    $("history").innerHTML = history.length ? history.map(function(h, i){
+      var cu = CU[h.cuisine] || {e:"🍽", n:h.cuisine};
+      return '<div class="hrow"><span class="when">' + fmtDate(h.t) + "</span><span>" + cu.e + " <b>" + esc(shortCu(cu)) + "</b>" + (h.place ? "｜" + esc(h.place) : "") + (h.hub ? " @" + esc(h.hub) : "") + "</span>" +
+        '<span class="note-s">' + h.n + " 人・" + (SLOT_LABEL[h.slot] || "") + (h.when ? "・" + esc(h.when) : "") + '</span><span class="acts"><button class="btn sm" type="button" data-hopen="' + i + '">再開這組</button><button class="btn sm ghost" type="button" data-hdel="' + i + '" aria-label="刪除">✕</button></span></div>';
+    }).join("") : '<p class="empty">還沒有紀錄。決定好之後按「存到聚餐紀錄」。</p>';
+  }
+  $("history").addEventListener("click", function(e){
+    var o = e.target.closest("[data-hopen]"), d = e.target.closest("[data-hdel]");
+    if(o){
+      var h = history[+o.dataset.hopen];
+      state.members = (h.members || []).map(function(r){ return {id:uid(), name:r[0], station:r[1], line:lineOf(r[1]), mode:r[2], budget:r[3], diet:r[4] || [], wants:r[5] || []}; });
+      state.head = h.head || h.n; state.cond = Object.assign(DEFAULT_COND(), h.cond || {});
+      persist(); renderMembers(); renderCond(); window.scrollTo({top:0, behavior:settings.reduce ? "auto" : "smooth"}); toast("已載入這組成員與條件");
+    }
+    if(d){ history.splice(+d.dataset.hdel, 1); save(STORE.history, history); renderHistory(); }
+  });
+  $("histExport").onclick = function(){
+    var blob = new Blob([JSON.stringify({app:"group-dining-decider", v:1, history:history, state:state}, null, 2)], {type:"application/json"});
+    var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "聚餐紀錄_" + new Date().toISOString().slice(0, 10) + ".json"; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  };
+  $("histImport").onchange = function(){
+    var f = this.files[0]; if(!f) return;
+    var rd = new FileReader();
+    rd.onload = function(){
+      try {
+        var d = JSON.parse(rd.result);
+        if(!d || !Array.isArray(d.history)) throw 0;
+        var seen = {}; history.forEach(function(h){ seen[h.t + h.cuisine] = 1; });
+        var add = d.history.filter(function(h){ return h && CU[h.cuisine] && !seen[h.t + h.cuisine]; });
+        history = add.concat(history).sort(function(a, b){ return b.t - a.t; }).slice(0, 50);
+        save(STORE.history, history); renderHistory(); toast("匯入 " + add.length + " 筆紀錄");
+      } catch(e){ toast("檔案格式不正確"); }
+    };
+    rd.readAsText(f); this.value = "";
+  };
+  $("histClear").onclick = function(){ if(!history.length) return; if(this.dataset.armed){ history = []; save(STORE.history, history); renderHistory(); toast("紀錄已清除"); delete this.dataset.armed; this.textContent = "清除全部紀錄"; } else { this.dataset.armed = 1; this.textContent = "再按一次確認清除"; var b = this; setTimeout(function(){ delete b.dataset.armed; b.textContent = "清除全部紀錄"; }, 3000); } };
+
+  /* ================= 選用 BYOK AI ================= */
+  var api = load(STORE.api, {provider:"gemini", models:{}, keys:{}});
+  function syncApiFields(){
+    $("aiProvider").value = api.provider;
+    $("aiModel").value = (api.models && api.models[api.provider]) || AI_DEFAULT_MODEL[api.provider];
+    $("aiKey").value = (api.keys && api.keys[api.provider]) || "";
+  }
+  function persistApi(){
+    api.models = api.models || {}; api.keys = api.keys || {};
+    api.models[api.provider] = $("aiModel").value.trim() || AI_DEFAULT_MODEL[api.provider];
+    api.keys[api.provider] = $("aiKey").value.trim();
+    save(STORE.api, api);
+  }
+  $("aiProvider").onchange = function(){ api.provider = this.value; syncApiFields(); save(STORE.api, api); };
+  $("aiModel").onchange = persistApi; $("aiKey").onchange = persistApi;
+  syncApiFields();
+  async function callLLM(provider, model, apiKey, prompt, signal){
+    var url, headers, body, extract;
+    if(provider === "claude"){
+      url = "https://api.anthropic.com/v1/messages";
+      headers = {"content-type":"application/json", "x-api-key":apiKey, "anthropic-version":"2023-06-01", "anthropic-dangerous-direct-browser-access":"true"};
+      body = {model:model, max_tokens:4000, messages:[{role:"user", content:prompt}]};
+      extract = function(d){ return (d.content || []).filter(function(b){ return b.type === "text"; }).map(function(b){ return b.text; }).join(""); };
+    } else if(provider === "openai" || provider === "openrouter"){
+      url = provider === "openai" ? "https://api.openai.com/v1/chat/completions" : "https://openrouter.ai/api/v1/chat/completions";
+      headers = {"content-type":"application/json", "authorization":"Bearer " + apiKey};
+      body = {model:model, messages:[{role:"user", content:prompt}]};
+      extract = function(d){ return d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content; };
+    } else {
+      url = "https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent";
+      headers = {"content-type":"application/json", "x-goog-api-key":apiKey};
+      body = {contents:[{parts:[{text:prompt}]}]};
+      extract = function(d){ var ps = (d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts) || []; return ps.map(function(p){ return p.text || ""; }).join(""); };
+    }
+    var res = await fetch(url, {method:"POST", headers:headers, body:JSON.stringify(body), signal:signal});
+    var data = await res.json().catch(function(){ return {}; });
+    if(!res.ok) throw new Error((data.error && (data.error.message || data.error)) || ("HTTP " + res.status));
+    var t = extract(data);
+    if(!t) throw new Error("回應中沒有文字內容");
+    return t;
+  }
+  function parseJsonArray(raw){
+    var s = String(raw).replace(/```(?:json)?/g, "");
+    var a = s.indexOf("["), b = s.lastIndexOf("]");
+    if(a < 0 || b <= a) throw new Error("AI 回覆不是 JSON 陣列");
+    return JSON.parse(s.slice(a, b + 1));
+  }
+  function buildAiPrompt(){
+    var g = run.g, hubs = run.hubs.slice(0, 3).map(function(h){ return hubLabel(h.hub); });
+    var types = run.picks.slice(0, 3).map(function(p){ return shortCu(p.cu); });
+    var diets = Object.keys(g.diets).map(function(k){ return DIET_LABEL[k] + " " + g.diets[k].length + " 人"; });
+    var need = []; if(g.c.room) need.push("需要包廂或安靜"); if(g.c.kids) need.push("有小孩"); if(g.c.elder) need.push("有長輩"); if(g.c.drink) need.push("想喝酒"); if(g.drivers) need.push(g.drivers + " 人開車需要停車");
+    return "你是熟悉台北與新北餐廳的聚餐顧問。請推薦 6 家實際存在、目前仍營業的餐廳。\n" +
+      "條件：" + g.n + " 人、" + SLOT_LABEL[g.c.slot] + "、場合：" + OCC_LABEL[g.c.occasion] + "、每人預算 " + g.budget + " 元以內。\n" +
+      "地點：優先在這些捷運站步行 10 分鐘內：" + (hubs.length ? hubs.join("、") : "台北車站、中山、忠孝復興") + "。\n" +
+      "類型：優先考慮 " + types.join("、") + "，也可推薦同樣符合條件的其他類型。\n" +
+      "飲食限制：" + (diets.length ? diets.join("、") : "無") + "。其他需求：" + (need.length ? need.join("、") : "無") + "。\n" +
+      "使用繁體中文與台灣用語。不確定是否仍營業的店家不要列。只回傳 JSON 陣列，不要任何說明文字，每個元素格式：\n" +
+      '{"name":"店名","station":"最近捷運站","type":"料理類型","price":"人均約 X–Y 元","why":"一句話說明為什麼適合這群人","caution":"訂位或飲食限制要注意的地方"}';
+  }
+  var aiRun = null, AI_MSGS = ["AI 正在翻美食地圖…","比對每個人的預算…","幫不吃辣的人找退路…","確認包廂與人數…","快好了，再等一下…"];
+  function startAi(){
+    var t0 = Date.now(), i = 0;
+    $("aiLoading").classList.add("show"); $("aiProg").style.width = "5%";
+    aiRun.timer = setInterval(function(){
+      var s = (Date.now() - t0) / 1000;
+      $("aiSec").textContent = "已等待 " + Math.floor(s) + " 秒";
+      $("aiProg").style.width = (92 * (1 - Math.exp(-s / 12))).toFixed(1) + "%";
+      if(Math.floor(s) % 4 === 0){ $("aiMsg").textContent = AI_MSGS[i++ % AI_MSGS.length]; }
+    }, 1000);
+  }
+  function stopAi(){ if(aiRun){ clearInterval(aiRun.timer); } $("aiProg").style.width = "100%"; setTimeout(function(){ $("aiLoading").classList.remove("show"); }, 300); }
+  $("aiCancel").onclick = function(){ if(aiRun && aiRun.ctrl) aiRun.ctrl.abort(); };
+  $("btnAi").onclick = async function(){
+    if(!run.picks.length){ toast("先按「幫我們決定！」"); return; }
+    var key = (api.keys || {})[api.provider];
+    if(!key){ toast("請先到 ⚙ 常用設定填入 AI 金鑰（沒有金鑰也能用上方的規則式推薦）"); openModal("setBg"); setTimeout(function(){ $("aiKey").focus(); }, 50); return; }
+    if(aiRun) return;
+    aiRun = {ctrl:new AbortController()};
+    $("btnAi").disabled = true; $("aiList").innerHTML = ""; startAi();
+    try {
+      var raw = await callLLM(api.provider, (api.models || {})[api.provider] || AI_DEFAULT_MODEL[api.provider], key, buildAiPrompt(), aiRun.ctrl.signal);
+      var arr = parseJsonArray(raw).filter(function(x){ return x && x.name; }).slice(0, 8);
+      if(!arr.length) throw new Error("AI 沒有給出店家");
+      $("aiList").innerHTML = arr.map(function(x){
+        return '<div class="ai-item"><h4>' + esc(x.name) + '<span class="tagai">AI 建議・請查證</span></h4>' +
+          '<div class="note-s">🚇 ' + esc(x.station || "") + "｜" + esc(x.type || "") + "｜" + esc(x.price || "") + "</div>" +
+          "<div>" + esc(x.why || "") + "</div>" + (x.caution ? '<div class="note-s">⚠ ' + esc(x.caution) + "</div>" : "") +
+          '<div style="margin-top:6px"><a class="btn sm" href="' + mapUrl(x.name + " " + (x.station || "")) + '" target="_blank" rel="noopener" style="text-decoration:none">🗺 查證這家</a></div></div>';
+      }).join("");
+      toast("AI 推薦了 " + arr.length + " 家，記得逐一查證");
+    } catch(e){
+      $("aiList").innerHTML = '<p class="empty">' + (e.name === "AbortError" ? "已取消。" : "AI 推薦失敗：" + esc(e.message) + "。上方的規則式推薦一樣可以用。") + "</p>";
+    } finally {
+      stopAi(); aiRun = null; $("btnAi").disabled = false;
+    }
+  };
+
+  /* ================= 設定與彈窗 ================= */
+  function openModal(id){ $(id).classList.add("show"); }
+  function closeModal(id){ $(id).classList.remove("show"); if(id === "aboutBg"){ save(STORE.warn, 1); } }
+  document.querySelectorAll(".modal-bg").forEach(function(bg){
+    bg.addEventListener("click", function(e){ if(e.target === bg || e.target.closest("[data-close]")) closeModal(bg.id); });
+  });
+  document.addEventListener("keydown", function(e){ if(e.key === "Escape") document.querySelectorAll(".modal-bg.show").forEach(function(bg){ closeModal(bg.id); }); });
+  document.addEventListener("click", function(e){
+    var a = e.target.closest("[data-open-about]"); if(!a) return;
+    closeModal("setBg"); openModal("aboutBg");
+    if(a.dataset.openAbout === "creator") setTimeout(function(){ $("creatorBox").scrollIntoView({block:"center"}); }, 30);
+  });
+  $("btnSettings").onclick = function(){ fillSettings(); openModal("setBg"); };
+  function fillSettings(){
+    $("sName").value = settings.name || "";
+    $("sStation").innerHTML = '<option value="">（不設定）</option>' + LINE_ORDER.map(function(l){
+      var ss = STATIONS.filter(function(s){ return s.lines[0] === l; });
+      return ss.length ? '<optgroup label="' + l + '">' + ss.map(function(s){ return '<option' + (s.name === settings.station ? " selected" : "") + ">" + esc(s.name) + "</option>"; }).join("") + "</optgroup>" : "";
+    }).join("");
+    $("sBudget").value = settings.budget || 500; $("sSlot").value = settings.slot || "D";
+    $("sFont").value = settings.font || "m"; $("sTheme").value = settings.theme || "auto"; $("sReduce").checked = !!settings.reduce;
+  }
+  function applySettings(){
+    document.documentElement.setAttribute("data-font", settings.font || "m");
+    if(settings.theme === "light" || settings.theme === "dark") document.documentElement.setAttribute("data-theme", settings.theme);
+    else document.documentElement.removeAttribute("data-theme");
+  }
+  [["sName","name"],["sStation","station"],["sBudget","budget"],["sSlot","slot"],["sFont","font"],["sTheme","theme"],["sReduce","reduce"]].forEach(function(p){
+    $(p[0]).addEventListener("change", function(){
+      settings[p[1]] = this.type === "checkbox" ? this.checked : (p[1] === "budget" ? Math.max(100, +this.value || 500) : this.value.trim ? this.value.trim() : this.value);
+      save(STORE.settings, settings); applySettings();
+    });
+  });
+  $("setReset").onclick = function(){
+    settings = {name:"", station:"", budget:500, slot:"D", font:"m", theme:"auto", reduce:false};
+    save(STORE.settings, settings); applySettings(); fillSettings(); toast("已恢復預設（AI 金鑰保留）");
+  };
+
+  /* ================= 啟動 ================= */
+  applySettings();
+  var fromShare = readShare();
+  renderPresets(); renderMembers(); renderCond(); renderHistory();
+  if(fromShare){ go(false); toast("已載入分享的聚餐條件"); }
+  if(!load(STORE.warn, 0)) setTimeout(function(){ openModal("aboutBg"); }, 400);
+
+  window._gdd = {state:state, settings:settings, CUISINES:CUISINES, HUBS:HUBS, decide:decide, go:go, applyPreset:applyPreset, groupInfo:groupInfo, rankHubs:rankHubs, travelMin:travelMin, encodeShare:encodeShare, shareUrl:shareUrl, run:run, openDecide:openDecide, buildAiPrompt:buildAiPrompt, getHistory:function(){ return history; }};
+})();
+</script>
+
+<script>
+/* ================= 頂部跑馬燈（獨立運作，共用工作區既有的公告 Google Sheet） ================= */
+(function () {
+  "use strict";
+  var MARQUEE_CHECK_URL = "https://script.google.com/macros/s/AKfycbwKX0DNNbY8y4nf90BFTHtxgfqJcHHcZasRrgycl4QAe52_hkjMWSkYk4xOsqU-JPCROw/exec";
+  var STORAGE_KEY = "gddMarquee";
+  var REFRESH_MS = 20 * 60 * 1000;
+  var bar = document.getElementById("marqueeBar");
+  var track = document.getElementById("marqueeTrack");
+  var lastKey = null;
+  function loadCache() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]"); } catch (e) { return []; } }
+  function saveCache(items) { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(items)); } catch (e) {} }
+  function appendParsedText(container, text) {
+    var re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+    var lastIndex = 0, m;
+    while ((m = re.exec(text))) {
+      if (m.index > lastIndex) container.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+      var a = document.createElement("a");
+      a.href = m[2]; a.textContent = m[1]; a.target = "_blank"; a.rel = "noopener noreferrer";
+      a.style.color = "inherit"; a.style.textDecoration = "underline";
+      container.appendChild(a);
+      lastIndex = re.lastIndex;
+    }
+    if (lastIndex < text.length) container.appendChild(document.createTextNode(text.slice(lastIndex)));
+  }
+  function buildTrackContent(items) {
+    var frag = document.createDocumentFragment();
+    function appendPass() { items.forEach(function (item, idx) { if (idx > 0) frag.appendChild(document.createTextNode("　★　")); appendParsedText(frag, item); }); }
+    appendPass(); frag.appendChild(document.createTextNode("　★　")); appendPass();
+    return frag;
+  }
+  function render(items) {
+    if (!items || !items.length) return;
+    var key = JSON.stringify(items);
+    if (key === lastKey) return;
+    lastKey = key;
+    track.innerHTML = "";
+    track.appendChild(buildTrackContent(items));
+    bar.classList.add("show");
+    document.body.classList.add("has-marquee");
+    var width = track.scrollWidth / 2;
+    track.style.animationDuration = Math.max(width / 80, 10) + "s";
+  }
+  function fetchMarquee() {
+    fetch(MARQUEE_CHECK_URL, { method: "POST", body: JSON.stringify({ serial: "" }) })
+      .then(function (r) { return r.json(); })
+      .then(function (data) { if (data && Array.isArray(data.marquee) && data.marquee.length) { saveCache(data.marquee); render(data.marquee); } })
+      .catch(function () {});
+  }
+  render(loadCache());
+  fetchMarquee();
+  setInterval(fetchMarquee, REFRESH_MS);
+})();
+</script>
+
+<script>
+/* ================= PWA 加入主畫面（獨立運作） ================= */
+(function () {
+  "use strict";
+  var deferredPrompt = null;
+  var ua = navigator.userAgent || "";
+  var isIOSDevice = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  var isMacDesktop = /Macintosh/.test(ua) && !isIOSDevice;
+  var isSafariEngine = /^((?!chrome|crios|fxios|edgios|android).)*safari/i.test(ua);
+  var isStandalone = (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || window.navigator.standalone === true;
+  function fallbackMessage() {
+    if (isIOSDevice) return "請點畫面上的「分享」圖示，選「加入主畫面」";
+    if (isMacDesktop && isSafariEngine) return "請用選單列「檔案」→「加入 Dock」（Safari 17 以上）";
+    return "目前瀏覽器不支援安裝，或已安裝過";
+  }
+  function notify(msg) {
+    var t = document.getElementById("toast");
+    if (!t) return;
+    t.textContent = msg; t.classList.add("show");
+    clearTimeout(notify._timer);
+    notify._timer = setTimeout(function () { t.classList.remove("show"); }, 2600);
+  }
+  window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferredPrompt = e; });
+  window.addEventListener("appinstalled", function () { deferredPrompt = null; notify("已加入主畫面"); });
+  document.querySelectorAll("[data-install]").forEach(function (btn) {
+    if (isStandalone) { btn.style.display = "none"; return; }
+    btn.addEventListener("click", function () {
+      if (!deferredPrompt) { notify(fallbackMessage()); return; }
+      try { deferredPrompt.prompt(); deferredPrompt.userChoice.then(function () { deferredPrompt = null; }); }
+      catch (e) { notify(fallbackMessage()); }
+    });
+  });
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function () { navigator.serviceWorker.register("service-worker.js").catch(function () {}); });
+  }
+})();
+</script>
+</body>
+</html>

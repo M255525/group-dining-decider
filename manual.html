@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>聚餐決定器操作手冊</title>
+<link rel="icon" href="icons/icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#3b2a20;--ink2:#5e4b3e;--paper:#fffdf8;--bg:#f7efe3;--line:#e6d6c2;--accent:#c8553d}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ink:#f2e6d8;--ink2:#cdbba8;--paper:#2a211b;--bg:#1f1814;--line:#47392e;--accent:#e2775c}}
+:root[data-theme="dark"]{--ink:#f2e6d8;--ink2:#cdbba8;--paper:#2a211b;--bg:#1f1814;--line:#47392e;--accent:#e2775c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",sans-serif;line-height:1.8}
+main{max-width:860px;margin:0 auto;padding:24px 16px 48px}
+h1,h2{font-family:"Noto Serif TC",serif}
+h1{font-size:28px;margin:0 0 4px}
+h2{font-size:20px;margin:22px 0 8px;border-left:6px solid var(--accent);padding-left:10px}
+section{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:6px 18px 14px;margin-top:14px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+a{color:var(--accent);word-break:break-all}
+p,li{color:var(--ink2)}
+code{background:rgba(128,128,128,.15);padding:0 4px;border-radius:4px}
+.warn li{color:var(--ink)}
+</style>
+</head>
+<body>
+<main>
+<h1>🍽 聚餐決定器・操作手冊</h1>
+<p><a href="index.html">← 回到聚餐決定器</a></p>
+
+<section id="intro">
+<h2>這是什麼？</h2>
+<p>約聚餐最難的不是吃，而是「要吃什麼、約在哪」。聚餐決定器把一群人的<b>人數、預算、飲食限制、出發地與交通方式</b>整合起來，算出<b>對大家都公平的集合點</b>和<b>最適合這群人的聚餐類型</b>，還是選不出來時，用轉盤或投票直接拍板，最後產生一段可以貼到 LINE 群組的聚餐公告。</p>
+<p>服務範圍：台北捷運與新北捷運路網（不含機場捷運、台鐵）。不需要登入，也不需要任何金鑰就能使用。</p>
+</section>
+
+<section id="steps">
+<h2>五個步驟</h2>
+<ol>
+<li><b>① 誰要來？</b>按「＋ 新增成員」，每人填暱稱、出發捷運站（先選路線再選站）、交通方式（捷運／公車／開車／機車／步行）、個人預算上限、不能吃的東西（全素、蛋奶素、不吃牛、不吃豬、不吃辣、海鮮過敏、清真、控糖低醣、不吃生食）和想吃的口味。也可以只填右下角的「總人數」，沒填名單的人視為不挑食。右邊的圓桌會即時畫出座位：紅色＝有飲食限制、綠色＝沒有限制、灰色＝未填名單。</li>
+<li><b>② 這次聚會</b>選時段（午餐／晚餐／宵夜）、場合（輕鬆聚／慶生／商務／家族），填每人預算，再勾選是否需要包廂、有小孩、有長輩、想喝酒。</li>
+<li><b>③ 集合點</b>按「🍽 幫我們決定！」後，會列出前三個最公平的捷運站，以及每個人到站的估計時間。排序原則是<b>先讓最遠的那個人不要太遠</b>（最遠時間占 60%、平均時間占 40%）。開車的人會優先考慮停車較方便的站。</li>
+<li><b>④ 推薦聚餐類型</b>從內建 30 種聚餐類型中排出前 5 名，每張卡片顯示契合度分數、建議集合站、人均價位、適合人數，以及預算／飲食／人數／場合／需求／想吃六項分數條。點「🗺 地圖找店」會在 Google 地圖搜尋該站附近的這類餐廳。都不想吃就按「🔄 換一批」。</li>
+<li><b>⑤ 拍板</b>用「🎡 轉盤」隨機抽一個；或用「🗳 現場輪流投」把手機傳下去每人投一票；或切到「💬 丟到 LINE 群組投」複製投票訊息。決定後按「✅ 就決定這個」，填日期時間與店名，就能複製 LINE 公告、存到聚餐紀錄。</li>
+</ol>
+</section>
+
+<section id="rules">
+<h2>推薦是怎麼算的？</h2>
+<div class="tw"><table>
+<tr><th>項目</th><th>滿分</th><th>說明</th></tr>
+<tr><td>預算</td><td>25</td><td>以「全體最低的個人預算」為準；這類店人均價位上限在預算內得滿分，起價超過預算 15% 直接排除。</td></tr>
+<tr><td>飲食限制</td><td>20</td><td>任何人「幾乎沒得吃」就直接排除（例如全素遇到燒肉）；「需先問店家」的（例如火鍋改素食鍋）每多一個人扣 5 分，並在卡片上標出要問什麼。</td></tr>
+<tr><td>人數</td><td>10</td><td>在這類店適合的人數範圍內得滿分；超過太多（1.6 倍）直接排除。</td></tr>
+<tr><td>場合</td><td>15</td><td>商務看正式程度、慶生看氣氛、家族看長輩小孩與包廂、輕鬆聚則避開太正式的高價店。</td></tr>
+<tr><td>需求</td><td>15</td><td>包廂、小孩、長輩、喝酒四項逐一扣分。</td></tr>
+<tr><td>想吃</td><td>15</td><td>有填「想吃」的人當中，有幾成的口味被這類店命中；沒人填就給中間分。</td></tr>
+</table></div>
+<p>另外，<b>最近 3 次聚餐紀錄</b>吃過的類型會扣 8 分，避免一直吃同一種。時段不符（例如午餐不推居酒屋）也會排除。被排除的類型和原因都列在「為什麼沒有推薦某些類型？」。</p>
+<p>交通時間是用出發站到集合站的<b>直線距離</b>推估：捷運約 6 分鐘＋每公里 2.5 分鐘、公車約 8 分鐘＋每公里 3.7 分鐘、開車另加找停車位的時間；搭捷運時出發站和集合站不在同一條線，再加 7 分鐘轉乘。沒有計算實際路線，只適合拿來比較哪個站比較公平。</p>
+</section>
+
+<section id="ai">
+<h2>AI 推薦具體店家（選用）</h2>
+<p>規則式推薦只告訴你「吃什麼類型、約在哪站」。如果想直接拿到店名，可以到 ⚙ 常用設定填入自己的 API 金鑰（Google Gemini、OpenRouter、OpenAI、Anthropic Claude 擇一），再按「🤖 AI 推薦具體店家」。</p>
+<ul>
+<li>送出的內容只有人數、時段、場合、預算、集合站、飲食限制人數與需求，<b>不會送出成員暱稱</b>。</li>
+<li>AI 是依記憶推薦，<b>店家可能已歇業、搬遷或資訊錯誤</b>，每家都附「🗺 查證這家」連結，請務必確認後再訂位。</li>
+<li>金鑰只存在你的瀏覽器，直接送到服務商官方 API；費用由你與服務商自行負擔。</li>
+</ul>
+</section>
+
+<section id="share">
+<h2>分享、紀錄與設定</h2>
+<ul>
+<li><b>🔗 分享這組條件</b>：把成員名單與條件編碼進網址，傳給同行的人打開就會看到同一份推薦。網址內含暱稱、出發站與飲食限制，請只傳給參加的人。</li>
+<li><b>📒 聚餐紀錄</b>：存在這台裝置，最多 50 筆；可「再開這組」重新載入成員，也能匯出／匯入 JSON 換手機。</li>
+<li><b>⚙ 常用設定</b>：我的暱稱與常用出發站（新增名單時第一位自動帶入）、預設預算與時段、字級（長輩可選大字）、亮暗色、減少動畫（轉盤直接出結果），以及 AI 金鑰。</li>
+<li><b>📲 加入主畫面</b>：手機可安裝成 App，下次一點就開。</li>
+<li>四組快速範例：同事午餐 6 人、家族聚餐 10 人、朋友慶生 8 人、跨區同學會 12 人，可以先點來玩玩看。</li>
+</ul>
+</section>
+
+<section id="warn">
+<h2>⚠ 使用警語</h2>
+<ul class="warn">
+<li>交通時間依直線距離粗估，未計實際路線、轉乘與塞車，只能當比較參考。</li>
+<li>推薦的是「聚餐類型＋集合點」，人均價位是一般行情，不是任何特定店家的報價。</li>
+<li>飲食限制只是分類判斷。<b>食物過敏、宗教飲食（如清真）請務必直接向店家確認。</b></li>
+<li>AI 推薦的店家可能已歇業或不存在，一律請自行查證。</li>
+<li>資料只存在這台裝置；分享連結會帶有成員暱稱、出發站與飲食限制。</li>
+<li>本工具與創作者不對聚餐結果、店家服務或任何因此產生的損失負責。僅供教學、課程及個人使用，禁止未經授權公開發布、販售或商業化使用。</li>
+</ul>
+</section>
+
+<section id="creator">
+<h2>創作者</h2>
+<div class="mk-creator">
+<style>.mk-creator{line-height:1.75}.mk-creator h3{margin:14px 0 6px;font-size:1.05em}.mk-creator table{width:100%;border-collapse:collapse;font-size:.95em}.mk-creator td,.mk-creator th{text-align:left;padding:5px 6px;border-bottom:1px solid rgba(128,128,128,.3);vertical-align:top}.mk-creator th{white-space:nowrap}.mk-creator ul{margin:4px 0;padding-left:1.4em}.mk-creator .mk-tags{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0}.mk-creator .mk-tags span{border:1px solid rgba(128,128,128,.45);border-radius:999px;padding:1px 10px;font-size:.9em}</style>
+<p><b>Mark Tsai（蔡豐全）</b>為深耕創業輔導與數位轉型領域的顧問與講師，長期擔任勞動力發展署創業顧問與多項政府計畫的顧問、業師與評審委員，協助中小企業導入數據分析與 AI 工具、申請政府補助計畫，並具備跨境電商實務與講師培訓的豐富經驗。本工具是其推廣 AI 工具運用於教學與課程情境的作品之一。</p>
+<p>聯絡信箱：<a href="mailto:tsaimark@gmail.com">tsaimark@gmail.com</a></p>
+<h3>專長</h3>
+<div class="mk-tags"><span>銷售數據分析</span><span>AI 工具運用</span><span>政府補助計畫申請</span><span>創業</span><span>跨境電商</span></div>
+<h3>證照</h3>
+<table>
+<thead><tr><th>年度</th><th>證照</th></tr></thead>
+<tbody>
+<tr><td>2013</td><td>青創總會 創業輔導顧問師班</td></tr>
+<tr><td>2014</td><td>青創總會 網路行銷講師培訓班</td></tr>
+<tr><td>2016</td><td>阿里巴巴 P4P 認證講師</td></tr>
+<tr><td>2017</td><td>iCap 訓練規劃與評量職能基準課程</td></tr>
+<tr><td>2023</td><td>iCap 職能導向課程申請認證實作班</td></tr>
+<tr><td>2025</td><td>iPAS AI 應用規劃師－初級</td></tr>
+<tr><td>2025</td><td>新北市社會局 社區數位陪伴員</td></tr>
+</tbody>
+</table>
+<h3>經歷</h3>
+<ul>
+<li>勞動力發展署桃竹苗分署 創業顧問（2017－迄今）</li>
+<li>勞動力發展署（北北基）小型企業人力提升計畫 顧問（2019－迄今）</li>
+<li>勞動力發展署（桃竹苗）小型企業人力提升計畫 顧問（2019－迄今）</li>
+<li>農業部農業科技司「科技農企業雙軸轉型躍升發展」科技計畫 業師（2025－2026）</li>
+<li>勞動力發展署 企業人力資源提升計畫 審查委員（2024）</li>
+<li>勞動力發展署 職前訓練評鑑計畫 委員（2022）</li>
+<li>勞動部桃竹苗分署 桃竹苗區域運籌人力資源整合服務計畫 顧問（2022－2023）</li>
+<li>經濟部中小企業處 SBIR 海選專案 評審委員（2019－2024）</li>
+<li>勞動力發展署 數位學習課程清單審查會議 審查委員（2024－2025）</li>
+<li>輔仁大學創新跨領域學院 課務委員（2024－2025）</li>
+<li>台北市進出口商業同業公會 跨境電商生態村 顧問</li>
+<li>台灣網商協會 顧問</li>
+<li>中華職能開發策進會 顧問（2018－2020）</li>
+<li>新北市汽車美容人員職業工會 顧問（2023－迄今）</li>
+<li>中華網路行銷講師協會 顧問（2022－迄今）</li>
+<li>新北市社企電商基地 輔導顧問（2018－2020）</li>
+<li>阿里巴巴國際站平台 認證講師（2016）</li>
+<li>巨匠電腦 跨境電子商務班 講師（2016－2017）</li>
+</ul>
+</div>
+</section>
+<p style="margin-top:18px"><a href="index.html">← 回到聚餐決定器</a></p>
+</main>
+</body>
+</html>
