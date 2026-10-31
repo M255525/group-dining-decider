@@ -211,15 +211,52 @@
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .empty{color:var(--dim);font-size:.92rem;padding:8px 0}
 
+  .mhead{display:flex;gap:8px;align-items:center;padding-right:58px}
+  .mhead input[type=text]{flex:1;min-width:0}
+  .mcard .tog{position:absolute;top:6px;right:34px;border:0;background:none;color:var(--dim);cursor:pointer;font-size:.95rem;padding:4px 6px;border-radius:6px;display:none}
+  .msum{display:none;font-size:.84rem;color:var(--dim);margin:4px 0 0 38px;line-height:1.5}
+  .msum b{color:var(--ink);font-weight:600}
+  .msum .dw{color:var(--warn)}
+  .mcard.collapsed .row.body{display:none}
+  .mcard.collapsed .msum{display:block}
+  #mobileGo{display:none}
+  @media (max-width:1000px) and (min-width:641px){
+    .members{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
   @media (max-width:900px){
-    .layout{grid-template-columns:1fr}
-    .table-box{position:static;order:-1}
+    .layout{grid-template-columns:minmax(0,1fr)}
+    .table-box{position:static;order:-1;display:grid;grid-template-columns:190px minmax(0,1fr);gap:14px;align-items:center;text-align:left}
+    .table-box svg{max-width:190px}
+    .table-box .legend{grid-column:1 / 3;justify-content:flex-start;order:3}
+    .table-box .summary{margin-top:0}
     .decide{grid-template-columns:1fr}
   }
   @media (max-width:640px){
+    .mcard .tog{display:block}
+    .mcard{padding:8px 10px}
+    .mcard .row select{flex:1;min-width:0}
+    .table-box{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px;align-items:center;text-align:left}
+    .table-box svg{max-width:120px}
+    .table-box .legend{grid-column:1 / 3;justify-content:flex-start;order:3}
+    .table-box .summary{margin-top:0}
+    .conds{grid-template-columns:1fr}
+    .go .btn.big{width:100%}
+    .hub table{font-size:.8rem}
+    .tabs button{flex:1}
+    #mobileGo{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:2000;padding:8px 16px calc(8px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.08);gap:8px}
+    #mobileGo .btn{flex:1}
+    body{padding-bottom:70px}
+    #toast{bottom:84px}
+    .brand .sub{font-size:.85rem}
+    .brand{gap:10px}
+    .logo{width:40px;height:40px;font-size:22px}
+    .brand > div:nth-child(2){flex:1;min-width:0}
+    .brand .tools{flex-wrap:nowrap}
+    .brand .tools .btn{flex:1;padding:6px 6px;font-size:.8rem;text-align:center}
     .brand h1{font-size:1.4rem}
     .brand .tools{margin-left:0;width:100%}
-    .members{grid-template-columns:1fr}
+    .members{grid-template-columns:minmax(0,1fr)}
+    .layout > div{min-width:0}
     .card{padding:14px 12px}
     .pick{grid-template-columns:auto minmax(0,1fr)}
     .pick .score{grid-column:1;grid-row:2}
@@ -453,6 +490,8 @@
     </div>
   </div>
 </div>
+
+<div id="mobileGo"><button class="btn" type="button" id="mAdd">＋ 成員</button><button class="btn primary" type="button" id="mGo">🍽 幫我們決定！</button></div>
 
 <div id="toast" role="status"></div>
 
@@ -727,16 +766,29 @@
   }
   function memberHtml(m, i){
     var line = m.line || lineOf(m.station);
-    return '<div class="mcard" data-id="' + m.id + '">' +
+    var collapsed = isMobile() && !openCards[m.id];
+    return '<div class="mcard' + (collapsed ? " collapsed" : "") + '" data-id="' + m.id + '">' +
+      '<button class="tog" type="button" data-act="tog" aria-label="展開或收合">' + (collapsed ? "✎" : "▴") + '</button>' +
       '<button class="del" type="button" data-act="del" aria-label="移除">✕</button>' +
-      '<div class="row"><span class="avatar" style="background:' + COLORS[i % COLORS.length] + '">' + esc((m.name || "?").slice(0, 1)) + '</span><input type="text" data-f="name" value="' + esc(m.name) + '" maxlength="12" placeholder="暱稱" aria-label="暱稱"></div>' +
-      '<div class="row"><label>出發站</label><select data-f="line" aria-label="路線">' + lineOptions(line) + '</select><select data-f="station" aria-label="車站">' + stationOptions(line, m.station) + '</select></div>' +
-      '<div class="row"><label>交通</label><select data-f="mode" aria-label="交通方式">' + Object.keys(MODES).map(function(k){ return '<option value="' + k + '"' + (m.mode === k ? " selected" : "") + ">" + MODES[k].n + "</option>"; }).join("") + '</select>' +
+      '<div class="mhead"><span class="avatar" style="background:' + COLORS[i % COLORS.length] + '">' + esc((m.name || "?").slice(0, 1)) + '</span><input type="text" data-f="name" value="' + esc(m.name) + '" maxlength="12" placeholder="暱稱" aria-label="暱稱"></div>' +
+      '<div class="msum">' + sumHtml(m) + '</div>' +
+      '<div class="row body"><label>出發站</label><select data-f="line" aria-label="路線">' + lineOptions(line) + '</select><select data-f="station" aria-label="車站">' + stationOptions(line, m.station) + '</select></div>' +
+      '<div class="row body"><label>交通</label><select data-f="mode" aria-label="交通方式">' + Object.keys(MODES).map(function(k){ return '<option value="' + k + '"' + (m.mode === k ? " selected" : "") + ">" + MODES[k].n + "</option>"; }).join("") + '</select>' +
       '<label style="min-width:auto">預算</label><input type="number" data-f="budget" value="' + (m.budget || "") + '" min="0" step="50" style="width:6.5em" placeholder="' + (state.cond.budget || 500) + '" aria-label="個人預算">元</div>' +
-      '<div class="row"><label>不能吃</label><div class="chips">' + DIETS.map(function(d){ return '<span class="chip' + ((m.diet || []).indexOf(d[0]) >= 0 ? " on" : "") + '" data-diet="' + d[0] + '" role="button" tabindex="0">' + d[1] + "</span>"; }).join("") + '</div></div>' +
-      '<div class="row"><label>想吃</label><div class="chips">' + CATS.map(function(c){ return '<span class="chip want' + ((m.wants || []).indexOf(c) >= 0 ? " on" : "") + '" data-want="' + c + '" role="button" tabindex="0">' + c + "</span>"; }).join("") + '</div></div>' +
+      '<div class="row body"><label>不能吃</label><div class="chips">' + DIETS.map(function(d){ return '<span class="chip' + ((m.diet || []).indexOf(d[0]) >= 0 ? " on" : "") + '" data-diet="' + d[0] + '" role="button" tabindex="0">' + d[1] + "</span>"; }).join("") + '</div></div>' +
+      '<div class="row body"><label>想吃</label><div class="chips">' + CATS.map(function(c){ return '<span class="chip want' + ((m.wants || []).indexOf(c) >= 0 ? " on" : "") + '" data-want="' + c + '" role="button" tabindex="0">' + c + "</span>"; }).join("") + '</div></div>' +
       "</div>";
   }
+  var openCards = {};
+  function isMobile(){ return window.matchMedia("(max-width:640px)").matches; }
+  function sumHtml(m){
+    var d = (m.diet || []).map(function(k){ return DIET_LABEL[k]; });
+    return "📍 <b>" + esc(m.station || "未填站") + "</b>・" + MODES[m.mode || "mrt"].n + "・" + (m.budget ? m.budget + " 元" : "預設預算") +
+      (d.length ? '・<span class="dw">🚫 ' + esc(d.join("、")) + "</span>" : "") + ((m.wants || []).length ? "・想吃 " + esc(m.wants.join("、")) : "");
+  }
+  function refreshSum(card, m){ var el = card.querySelector(".msum"); if(el) el.innerHTML = sumHtml(m); }
+  var lastMobile = isMobile();
+  window.addEventListener("resize", function(){ var mb = isMobile(); if(mb !== lastMobile){ lastMobile = mb; renderMembers(); } });
   function renderMembers(){
     var box = $("members");
     box.innerHTML = state.members.length ? state.members.map(memberHtml).join("") : '<p class="empty">還沒有成員。可以按「＋ 新增成員」，或點上方的快速範例；也能只在右下填總人數。</p>';
@@ -755,7 +807,7 @@
     var m = findM(card.dataset.id), f = e.target.dataset.f; if(!m || !f) return;
     if(f === "name"){ m.name = e.target.value.trim(); card.querySelector(".avatar").textContent = (m.name || "?").slice(0, 1); renderTable(); }
     if(f === "budget"){ m.budget = +e.target.value || 0; renderSummary(); }
-    persist();
+    refreshSum(card, m); persist();
   });
   $("members").addEventListener("change", function(e){
     var card = e.target.closest(".mcard"); if(!card) return;
@@ -763,7 +815,7 @@
     if(f === "line"){ m.line = e.target.value; m.station = ""; card.querySelector('[data-f="station"]').innerHTML = stationOptions(m.line, ""); }
     if(f === "station"){ m.station = e.target.value; }
     if(f === "mode"){ m.mode = e.target.value; }
-    persist(); renderSummary();
+    refreshSum(card, m); persist(); renderSummary();
   });
   function chipToggle(e){
     var chip = e.target.closest(".chip"); if(!chip) return;
@@ -776,9 +828,17 @@
     if(key === "diet" && v === "veg" && i < 0){ var j = m.diet.indexOf("lacto"); if(j >= 0){ m.diet.splice(j, 1); var lc = card.querySelector('[data-diet="lacto"]'); if(lc) lc.classList.remove("on"); } }
     if(key === "diet" && v === "lacto" && i < 0){ var k = m.diet.indexOf("veg"); if(k >= 0){ m.diet.splice(k, 1); var vc = card.querySelector('[data-diet="veg"]'); if(vc) vc.classList.remove("on"); } }
     chip.classList.toggle("on", i < 0);
-    persist(); renderTable(); renderSummary();
+    refreshSum(card, m); persist(); renderTable(); renderSummary();
   }
   $("members").addEventListener("click", function(e){
+    var tg = e.target.closest('[data-act="tog"]') || (e.target.closest(".msum") && e.target.closest(".mcard"));
+    if(tg){
+      var cd = e.target.closest(".mcard"), willOpen = cd.classList.contains("collapsed");
+      openCards[cd.dataset.id] = willOpen;
+      cd.classList.toggle("collapsed", !willOpen);
+      cd.querySelector(".tog").textContent = willOpen ? "▴" : "✎";
+      return;
+    }
     if(e.target.closest('[data-act="del"]')){
       var card = e.target.closest(".mcard");
       state.members = state.members.filter(function(m){ return m.id !== card.dataset.id; });
@@ -793,7 +853,8 @@
   }
   $("addMember").onclick = function(){
     if(state.members.length >= 30){ toast("名單最多 30 人，其他人用總人數補上"); return; }
-    state.members.push(newMember());
+    var nm = newMember(); openCards[nm.id] = true;
+    state.members.push(nm);
     if(state.head && state.head < state.members.length) state.head = state.members.length;
     persist(); renderMembers();
     var inputs = $("members").querySelectorAll('input[data-f="name"]'); if(inputs.length){ inputs[inputs.length - 1].select(); }
@@ -1048,6 +1109,8 @@
       return true;
     } catch(e){ toast("分享連結格式不正確"); return false; }
   }
+  $("mGo").onclick = function(){ $("btnGo").click(); };
+  $("mAdd").onclick = function(){ $("addMember").click(); var c = $("members").lastElementChild; if(c && c.scrollIntoView) c.scrollIntoView({block:"center"}); };
   $("btnShare").onclick = function(){ copyText(shareUrl(), "分享連結已複製（含成員暱稱與飲食限制，請只傳給同行的人）"); };
 
   /* ================= 拍板與紀錄 ================= */

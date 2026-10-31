@@ -17,8 +17,10 @@
 - 儲存鍵：`gddState`、`gddSettings`、`gddApi`（BYOK 金鑰）、`gddHistory`（最多 50）、`gddWarnSeen`（首訪警語）、`gddMarquee`。
 - AI（選用）：`callLLM` 沿用 fridge-recipe-notes 格式，prompt 不送成員暱稱；回傳 JSON 陣列店家，標「AI 建議・請查證」。
 - 標準配備：跑馬燈（工作區公告 GAS、滑鼠移入暫停）、⚙ 常用設定（含「關於本工具」）、警語彈窗（首訪自動）、manual.html#creator 完整版、PWA、visitor-badge。
+- **RWD**（2026-10-31 使用者要求）：≤640px 成員卡預設收合成一行摘要（`.msum`：站・交通・預算・🚫限制・想吃），點 ✎ 或摘要展開（`openCards` 記住、新增的成員自動展開；跨 640 斷點 resize 會重繪）；底部固定 `#mobileGo`（＋成員／幫我們決定）；頁首三鈕同列。641–1000px 成員兩欄；≤900px 圓桌＋摘要並排。`.layout`／`.members` 欄寬要用 `minmax(0,1fr)` 並給 `.layout > div{min-width:0}`，否則 360px 會溢出 14px。
 - 測試掛鉤 `window._gdd`（state、decide、go、applyPreset、rankHubs、travelMin、shareUrl、openDecide…）。
 
 ## 驗證紀錄（2026-10-31，Python Playwright）
 - 淡水＋新店＋南港 → 雙連／中山／民權西路／台北車站；素食＋海鮮過敏＋預算 300 → 迴轉壽司因海鮮過敏排除、高價類型全因預算排除。
 - 4 組範例皆有結果；換一批、轉盤、拍板公告、存紀錄（重整後仍在）、投票、分享連結還原（375px 無水平捲動）、首訪警語只跳一次、無金鑰按 AI 會開設定、SW 註冊成功、無 console 錯誤。AI 真實金鑰未測。
+- RWD：360／414／768／1024／1440 皆無水平捲動；8 人範例在 360px 首屏高度由約 10,700px 降到 2,700px。
