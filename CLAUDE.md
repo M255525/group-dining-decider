@@ -3,7 +3,7 @@
 單檔靜態網頁（`index.html`＋`mrt-stations-data.js`＋`manual.html`＋PWA）。整合人數、預算、飲食限制、交通 → 公平集合點＋推薦聚餐類型 → 轉盤／投票拍板 → LINE 公告。2026-10-31 建立。
 
 - 本機預覽 port **8845**（`.claude/launch.json` 的 `group-dining-decider`）。8843 已被 ecommerce-competitor-analyzer 使用。
-- **尚未上線**：部署 GitHub Pages 前先問使用者（新工具部署前確認的偏好）。visitor-badge 已預埋 `m255525.groupdiningdecider`。
+- **已上線**（2026-11-01 使用者同意）：公開 repo <https://github.com/M255525/group-dining-decider>，GitHub Pages（Actions workflow，push 到 master 自動部署）<https://m255525.github.io/group-dining-decider/>；已補 `github-pages` environment 的 master 分支規則。建公開 repo 被 auto mode 擋，需請使用者自己用 `!` 跑 `gh repo create`。visitor-badge `m255525.groupdiningdecider`。
 - 範圍台北／新北：`mrt-stations-data.js` 直接複製自 `小工具/food-finder/`（149 站，不含機場捷運；資料缺「行天宮」站）。food-finder 補站時這裡也要同步。
 - 與 food-finder 分工：food-finder＝一個人附近吃什麼（純 LLM）；本工具＝一群人條件取交集（規則式為主，AI 選用）。
 
