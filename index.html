@@ -830,9 +830,9 @@
   function decide(skip, st){
     var g = groupInfo(st);
     var hubs = rankHubs(g);
-    // 只在「車程成本與最佳集合站相差 5 分鐘內」的站裡挑，場地加分（宵夜／停車／包廂）只用來打破近似平手，
-    // 避免加分蓋過車程、推出和大家出發站無關的遠站
-    var cand = hubs.length ? hubs.filter(function(h){ return h.cost <= hubs[0].cost + 5; }).slice(0, 4) : [];
+    // 集合站以車程為準：只在「車程成本與最佳集合站相差 2 分鐘內」的站裡挑，場地加分（宵夜／停車／包廂）只用來打破近似平手；
+    // 附近不適合某類型（例如沒夜市）就扣該類型的契合度，不把集合站拉去和大家出發站無關的遠站
+    var cand = hubs.length ? hubs.filter(function(h){ return h.cost <= hubs[0].cost + 2; }).slice(0, 3) : [];
     var scored = [], excluded = [];
     CUISINES.forEach(function(cu){
       var r = evalCuisine(cu, g);
@@ -844,6 +844,10 @@
           if(!best || v > best.v) best = {hr:hr, v:v, i:i};
         });
         r.hub = best.hr;
+        if(cu.needLate && !hasF(best.hr.hub, "late")){
+          r.total = Math.max(0, r.total - 15);
+          r.badges.push({k:"warn", t:"集合站附近夜市較少，可能要再移動一段"});
+        }
         r.rankScore = r.total + (hubBonus(best.hr, cu, g) - best.i * 0.5) / 100;
       } else {
         r.hub = null; r.rankScore = r.total;
